@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Ledger | ShopVerse Admin</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
+</head>
+<body>
+
+<div class="admin-container" id="admin-main">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">ShopVerse Elite</div>
+        <nav class="nav-list">
+            <a href="dashboard.html" class="nav-link"><i class="ph ph-squares-four"></i> Dashboard</a>
+            <a href="orders.html"    class="nav-link"><i class="ph ph-shopping-cart"></i> Orders</a>
+            <a href="products.html"  class="nav-link"><i class="ph ph-package"></i> Products</a>
+            <a href="payments.html"  class="nav-link active"><i class="ph ph-credit-card"></i> Payments</a>
+            <a href="vendors.html"   class="nav-link"><i class="ph ph-storefront"></i> Vendors</a>
+            <a href="users.html"     class="nav-link"><i class="ph ph-users"></i> Customers</a>
+        </nav>
+        <div style="margin-top:auto;">
+            <a href="../index.html" class="nav-link"><i class="ph ph-arrow-left"></i> Back to Store</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Header -->
+        <div class="header-flex">
+            <div>
+                <h1 class="page-title">Payment Ledger</h1>
+                <p style="color:var(--clr-muted);">All gateway transactions processed through the Orchestrator.</p>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div id="stats-row" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1.5rem; margin-bottom:2rem;">
+            <div class="stat-card" id="stat-total">
+                <div class="stat-label">Total Transactions</div>
+                <div class="stat-value" id="v-total">—</div>
+            </div>
+            <div class="stat-card" id="stat-revenue">
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value" id="v-revenue">—</div>
+            </div>
+            <div class="stat-card" id="stat-gw1">
+                <div class="stat-label" id="l-gw1">Gateway 1</div>
+                <div class="stat-value" id="v-gw1">—</div>
+            </div>
+            <div class="stat-card" id="stat-gw2">
+                <div class="stat-label" id="l-gw2">Gateway 2</div>
+                <div class="stat-value" id="v-gw2">—</div>
+            </div>
+        </div>
+
+        <!-- Gateway Breakdown Bar -->
+        <div style="background:var(--clr-surface-2); border:1px solid var(--clr-border); border-radius:var(--radius-md); padding:1.5rem; margin-bottom:2rem;">
+            <h3 style="font-size:1rem; color:var(--clr-muted); margin-bottom:1rem; text-transform:uppercase; letter-spacing:1px;">Revenue by Gateway</h3>
+            <div id="gateway-bars"></div>
+        </div>
+
+        <!-- Payments Table -->
+        <div class="order-table-container">
+            <div class="table-header">
+                <h2 style="font-size:1.1rem;">Transaction History</h2>
+                <div style="display:flex; gap:1rem; align-items:center;">
+                    <div class="search-box" style="position:relative;">
+                        <i class="ph ph-magnifying-glass" style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--clr-muted);"></i>
+                        <input type="text" id="pay-search" placeholder="Search TXN ID, customer, gateway..."
+                            style="padding:0.5rem 1rem 0.5rem 2.5rem; background:var(--clr-surface-2); border:1px solid var(--clr-border); border-radius:var(--radius-sm); color:#fff; outline:none; width:280px;"
+                            oninput="filterPayments(this.value)">
+                    </div>
+                    <select id="status-filter" onchange="filterPayments(document.getElementById('pay-search').value)"
+                        style="padding:0.5rem 1rem; background:var(--clr-surface-2); border:1px solid var(--clr-border); border-radius:var(--radius-sm); color:#fff; outline:none;">
+                        <option value="">All Statuses</option>
+                        <option value="success">✅ Success</option>
+                        <option value="failed">❌ Failed</option>
+                        <option value="pending">⏳ Pending</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="payments-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Customer</th>
+                            <th>Gateway</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date & Time</th>
+                            <th>Order</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payments-tbody">
+                        <tr><td colspan="7" style="text-align:center; padding:3rem;">
+                            <div class="btn-spinner" style="display:block; border-top-color:var(--clr-primary); margin:0 auto;"></div>
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<style>
+    /* Stat Cards */
+    .stat-card {
+        background: var(--clr-surface-2);
+        border: 1px solid var(--clr-border);
+        border-radius: var(--radius-md);
+        padding: 1.5rem;
+        transition: var(--trans-fast);
+    }
+    .stat-card:hover { border-color: var(--clr-primary); }
+    .stat-label { font-size: 0.8rem; color: var(--clr-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 1.75rem; font-weight: 800; color: #fff; }
+
+    /* Gateway badge colours */
+    .gw-stripe    { background: rgba(124,58,237,0.15); color: #a78bfa; border-color: rgba(124,58,237,0.3); }
+    .gw-jazzcash  { background: rgba(233,30,99,0.12);  color: #f472b6; border-color: rgba(233,30,99,0.3); }
+    .gw-easypaisa { background: rgba(16,185,129,0.12); color: #34d399; border-color: rgba(16,185,129,0.3); }
+    .gw-other     { background: rgba(255,255,255,0.05); color: var(--clr-muted); border-color: var(--clr-border); }
+
+    .gateway-pill {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        padding: 0.2rem 0.75rem; border-radius: 99px;
+        font-size: 0.75rem; font-weight: 700; border: 1px solid;
+    }
+
+    /* Progress bars */
+    .bar-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
+    .bar-label { width: 100px; font-size: 0.8rem; font-weight: 600; }
+    .bar-track { flex: 1; height: 8px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
+    .bar-amount { font-size: 0.8rem; font-weight: 700; color: var(--clr-muted); min-width: 80px; text-align: right; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--clr-border); font-size: 0.9rem; }
+    th { color: var(--clr-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    tr:hover { background: rgba(255,255,255,0.02); }
+    .txn-id { font-family: monospace; font-size: 0.8rem; color: var(--clr-primary-light); }
+</style>
+
+<script>
+    const BASE_URL = '/Ecommerce_site/Backend';
+    let allPayments = [];
+
+    const GW_COLORS = {
+        stripe:      '#7c3aed',
+        jazzcash:    '#e91e63',
+        easypaisa:   '#10b981',
+        credit_card: '#7c3aed',
+        paypal:      '#0070ba'
+    };
+
+    document.addEventListener('DOMContentLoaded', loadPayments);
+
+    async function loadPayments() {
+        try {
+            const res  = await fetch(`${BASE_URL}/payments.php`, { credentials: 'include' });
+            const data = await res.json();
+
+            if (!data.success) {
+                document.getElementById('payments-tbody').innerHTML =
+                    `<tr><td colspan="7" style="text-align:center;color:var(--clr-error);padding:2rem;">${data.message}</td></tr>`;
+                return;
+            }
+
+            allPayments = data.payments;
+            renderStats(data.stats);
+            renderGatewayBars(data.stats.gateways);
+            renderTable(allPayments);
+
+        } catch (err) {
+            document.getElementById('payments-tbody').innerHTML =
+                `<tr><td colspan="7" style="text-align:center;color:var(--clr-error);padding:2rem;">Network error — is WAMP running?</td></tr>`;
+        }
+    }
+
+    function renderStats(stats) {
+        document.getElementById('v-total').textContent   = stats.total.toLocaleString();
+        document.getElementById('v-revenue').textContent = `$${Number(stats.revenue).toLocaleString('en-US', {minimumFractionDigits:2})}`;
+
+        const gws = stats.gateways;
+        if (gws[0]) {
+            document.getElementById('l-gw1').textContent = capitalize(gws[0].payment_method);
+            document.getElementById('v-gw1').textContent = gws[0].count + ' txns';
+        }
+        if (gws[1]) {
+            document.getElementById('l-gw2').textContent = capitalize(gws[1].payment_method);
+            document.getElementById('v-gw2').textContent = gws[1].count + ' txns';
+        }
+    }
+
+    function renderGatewayBars(gateways) {
+        const maxTotal = Math.max(...gateways.map(g => parseFloat(g.total)));
+        const container = document.getElementById('gateway-bars');
+
+        container.innerHTML = gateways.map(g => {
+            const pct   = Math.round((parseFloat(g.total) / maxTotal) * 100);
+            const color = GW_COLORS[g.payment_method] || '#888';
+            return `
+                <div class="bar-row">
+                    <div class="bar-label">${capitalize(g.payment_method)}</div>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width:${pct}%; background:${color};"></div>
+                    </div>
+                    <div class="bar-amount">$${Number(g.total).toLocaleString()} <span style="opacity:0.5;">(${g.count})</span></div>
+                </div>`;
+        }).join('');
+    }
+
+    function renderTable(payments) {
+        const tbody = document.getElementById('payments-tbody');
+
+        if (!payments.length) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--clr-muted);">No payment records found.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = payments.map(p => {
+            const gwClass = `gw-${p.payment_method.replace('_','')}`;
+            const gwIcon  = p.payment_method.includes('jazz') ? 'ph-device-mobile'
+                          : p.payment_method.includes('easy') ? 'ph-device-mobile'
+                          : 'ph-credit-card';
+            const statusColor = p.status === 'success' ? '#10b981' : p.status === 'failed' ? '#ef4444' : '#f59e0b';
+            const date = new Date(p.created_at).toLocaleString('en-PK', {
+                day:'2-digit', month:'short', year:'numeric',
+                hour:'2-digit', minute:'2-digit'
+            });
+
+            return `
+            <tr>
+                <td class="txn-id" title="${p.transaction_id}">${p.transaction_id}</td>
+                <td>
+                    <div style="font-weight:600;">${escapeHTML(p.customer_name)}</div>
+                    <div style="font-size:0.75rem; color:var(--clr-muted);">${escapeHTML(p.customer_email)}</div>
+                </td>
+                <td>
+                    <span class="gateway-pill ${gwClass} gw-other">
+                        <i class="ph ${gwIcon}"></i>
+                        ${capitalize(p.payment_method.replace('_',' '))}
+                    </span>
+                </td>
+                <td style="font-weight:700; font-size:1rem;">$${Number(p.amount).toFixed(2)}</td>
+                <td>
+                    <span style="padding:0.2rem 0.6rem; border-radius:99px; font-size:0.75rem; font-weight:700;
+                                 background:${statusColor}22; color:${statusColor}; border:1px solid ${statusColor}44;">
+                        ${p.status.toUpperCase()}
+                    </span>
+                </td>
+                <td style="color:var(--clr-muted); font-size:0.82rem;">${date}</td>
+                <td>
+                    <span style="font-family:monospace; font-size:0.75rem; color:var(--clr-muted);" title="${p.order_uuid}">
+                        ${p.order_uuid.substring(0,13)}…
+                    </span>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function filterPayments(query) {
+        const status = document.getElementById('status-filter').value.toLowerCase();
+        const q      = (query || '').toLowerCase();
+
+        const filtered = allPayments.filter(p => {
+            const matchQuery = !q ||
+                p.transaction_id.toLowerCase().includes(q) ||
+                p.customer_name.toLowerCase().includes(q)  ||
+                p.customer_email.toLowerCase().includes(q) ||
+                p.payment_method.toLowerCase().includes(q);
+            const matchStatus = !status || p.status === status;
+            return matchQuery && matchStatus;
+        });
+        renderTable(filtered);
+    }
+
+    function capitalize(s) {
+        return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+    }
+
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>'"]/g,
+            t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t]));
+    }
+</script>
+
+<!-- Session check for admin -->
+<script src="../js/session_check.js"></script>
+</body>
+</html>

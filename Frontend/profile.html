@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile — ShopVerse</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
+  <script src="js/session_check.js"></script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="index.html" class="logo">✦ ShopVerse</a>
+      <nav class="nav-links">
+        <a href="index.html">All Products</a>
+      </nav>
+      <div class="nav-actions">
+        <div id="auth-actions">
+           <div class="loading-state" style="font-size:0.8rem">Authenticating...</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="profile-main" style="max-width: 1200px; margin: 4rem auto; padding: 0 1rem;">
+    <div class="section-header" style="margin-bottom: 2rem;">
+      <h2 style="font-size: 2rem;">My Profile</h2>
+    </div>
+
+    <!-- Alert System -->
+    <div class="alert alert-error" id="profile-alert" role="alert" style="margin-bottom: 2rem;">
+        <i class="ph ph-warning-circle"></i><span id="profile-alert-msg"></span>
+    </div>
+
+    <div class="profile-layout" style="display: grid; grid-template-columns: 1fr 2fr; gap: 3rem; align-items: start;">
+        
+        <!-- Left Panel: Profile Nav / Details -->
+        <aside class="profile-sidebar" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 1.5rem;">
+            <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--clr-border);">
+                <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 2.5rem; color: var(--clr-primary-light);">
+                    <i class="ph ph-user"></i>
+                </div>
+                <h3 id="profile-name" style="font-size: 1.25rem;">...</h3>
+            </div>
+            <nav class="profile-nav" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <a href="profile.html" class="active" style="padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border-radius: var(--radius-sm); color: var(--clr-primary-light); font-weight: 500; display:flex; align-items:center; gap:0.5rem;"><i class="ph ph-map-pin"></i> Addresses</a>
+                <a href="orders.html" style="padding: 0.75rem 1rem; color: var(--clr-text); display:flex; align-items:center; gap:0.5rem; opacity: 0.7;"><i class="ph ph-package"></i> Order History</a>
+            </nav>
+        </aside>
+
+        <!-- Right Panel: Address Management -->
+        <div class="profile-content">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.5rem;">Saved Addresses</h3>
+                <button class="btn-primary-sm" onclick="document.getElementById('add-address-form').style.display='block'" style="display:flex; align-items:center; gap:0.5rem;"><i class="ph ph-plus"></i> Add New</button>
+            </div>
+
+            <!-- Add Address Form (Hidden by default) -->
+            <form id="add-address-form" style="display: none; background: var(--clr-surface-2); border: 1px solid var(--clr-primary); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 1rem;">Add New Address</h4>
+                <div class="form-group">
+                    <label class="form-label">Address Line</label>
+                    <input class="form-input" id="addr-line" placeholder="123 Street Name, Apt 4" required />
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input class="form-input" id="addr-city" placeholder="City" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">State / Province</label>
+                        <input class="form-input" id="addr-state" placeholder="State" />
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Postal Code</label>
+                        <input class="form-input" id="addr-postal" placeholder="12345" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Country</label>
+                        <input class="form-input" id="addr-country" placeholder="Country" required />
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="submit" class="btn-primary" id="btn-save-addr">Save Address</button>
+                    <button type="button" class="btn-ghost" onclick="document.getElementById('add-address-form').style.display='none'">Cancel</button>
+                </div>
+            </form>
+
+            <!-- Addresses List -->
+            <div id="address-list" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+                <div class="loading-state">Loading addresses...</div>
+            </div>
+
+        </div>
+    </div>
+  </main>
+
+  <style>
+    /* Base Layout */
+    .site-header { background: var(--clr-surface); border-bottom: 1px solid var(--clr-border); padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; }
+    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-size: 1.5rem; font-weight: 800; background: var(--grad-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links a { margin-right: 1.5rem; font-weight: 500; transition: var(--trans-fast); }
+    .nav-links a:hover { color: var(--clr-primary-light); }
+    .btn-ghost { padding: 0.5rem 1rem; font-weight: 600; cursor:pointer;}
+    .btn-primary-sm { padding: 0.5rem 1rem; background: var(--grad-primary); border-radius: var(--radius-sm); font-weight: 600; color: #fff; cursor:pointer; border: none;}
+
+    .address-card { background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 1.5rem; position: relative; transition: var(--trans-fast); }
+    .address-card:hover { border-color: rgba(255,255,255,0.2); }
+    .address-card.is-default { border-color: var(--clr-primary); }
+    .badge-default { background: var(--clr-primary); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 99px; text-transform: uppercase; position: absolute; top: 1rem; right: 1rem; }
+    .address-actions { margin-top: 1rem; display: flex; gap: 1rem; font-size: 0.85rem; }
+    .address-actions button { background: none; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.25rem; transition: var(--trans-fast); }
+    .btn-make-default { color: var(--clr-muted); }
+    .btn-make-default:hover { color: var(--clr-primary-light); }
+    .btn-delete { color: var(--clr-error); opacity: 0.8;}
+    .btn-delete:hover { opacity: 1; }
+
+    @media (max-width: 768px) {
+        .profile-layout { grid-template-columns: 1fr !important; }
+    }
+  </style>
+
+  <script src="js/profile.js"></script>
+</body>
+</html>
+
+

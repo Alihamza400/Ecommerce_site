@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seller Hub — ShopVerse</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
+  <script src="../js/session_check.js"></script>
+</head>
+<body>
+  <!-- Navigation -->
+  <header class="site-header" style="border-bottom-color: var(--clr-accent);">
+    <div class="nav-container">
+      <a href="dashboard.html" class="logo" style="background: linear-gradient(135deg, #fbbf24, #d97706); -webkit-background-clip: text;">✦ Seller Hub</a>
+      <nav class="nav-links">
+        <a href="../index.html" style="color:var(--clr-text)">Visit Marketplace</a>
+      </nav>
+      <div class="nav-actions">
+        <div id="auth-actions">
+           <div class="loading-state" style="font-size:0.8rem">Authenticating...</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="vendor-main" style="max-width: 1200px; margin: 4rem auto; padding: 0 1rem;">
+    <div class="section-header" style="margin-bottom: 2rem; display:flex; justify-content:space-between; align-items:center;">
+      <h2 style="font-size: 2rem;">Manage Inventory</h2>
+      <button class="btn-primary" onclick="toggleModal('add-product-modal', true)" style="display:flex; align-items:center; gap:0.5rem;"><i class="ph ph-plus"></i> List New Product</button>
+    </div>
+
+    <!-- Alert System -->
+    <div class="alert alert-error" id="vendor-alert" role="alert" style="margin-bottom: 2rem; display:none;">
+        <i class="ph ph-warning-circle"></i><span id="vendor-alert-msg"></span>
+    </div>
+
+    <div class="admin-layout" style="display: grid; grid-template-columns: 1fr; gap: 3rem;">
+        
+        <div class="checkout-panel" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 2rem;">
+            <div id="products-list" style="overflow-x: auto;">
+                <div class="loading-state">Fetching your catalog...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Add Product Modal / Dropdown equivalent -->
+    <div id="add-product-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:999; align-items:center; justify-content:center;">
+        <div style="background:var(--clr-surface); padding:2rem; border-radius:var(--radius-md); border:1px solid var(--clr-border); width: 100%; max-width: 600px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem;">
+                <h3>List New Product</h3>
+                <button onclick="toggleModal('add-product-modal', false)" style="background:transparent; border:none; color:var(--clr-muted); font-size:1.5rem; cursor:pointer;"><i class="ph ph-x"></i></button>
+            </div>
+            
+            <form id="add-product-form">
+                <input type="hidden" id="p-id" value="0">
+                <input type="hidden" id="p-existing-image" value="">
+                
+                <div class="form-group">
+                    <label class="form-label">Product Name</label>
+                    <input class="form-input" id="p-name" required />
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Brand</label>
+                        <input class="form-input" id="p-brand" placeholder="e.g. Acme" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category (ID mapped natively)</label>
+                        <select class="form-input" id="p-cat">
+                            <option value="1">Electronics</option>
+                            <option value="2">Fashion</option>
+                            <option value="3">Home & Garden</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Price ($)</label>
+                        <input class="form-input" type="number" step="0.01" id="p-price" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Initial Stock</label>
+                        <input class="form-input" type="number" id="p-stock" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Product Image</label>
+                    <input type="file" class="form-input" id="p-image" accept="image/*" style="padding: 0.5rem;" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" id="p-desc" rows="3" style="resize:vertical;"></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="width:100%; margin-top:1rem;" id="btn-save-product">Publish Product</button>
+            </form>
+        </div>
+    </div>
+  </main>
+
+  <style>
+    .site-header { background: var(--clr-surface); border-bottom: 1px solid var(--clr-border); padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; }
+    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-size: 1.5rem; font-weight: 800; }
+    .nav-links a { margin-right: 1.5rem; font-weight: 500; transition: var(--trans-fast); }
+    .nav-links a:hover { color: var(--clr-primary-light); }
+    
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 1rem; border-bottom: 1px solid var(--clr-border); }
+    th { color: var(--clr-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    tr:hover { background: rgba(255,255,255,0.02); }
+  </style>
+
+  <script>
+    const BASE_URL = '/Ecommerce_site/Backend';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchProducts();
+        setupForm();
+    });
+
+    function toggleModal(id, show) {
+        document.getElementById(id).style.display = show ? 'flex' : 'none';
+        if(!show) document.getElementById('add-product-form').reset();
+    }
+
+    function showAlert(text, type='error') {
+        const box = document.getElementById('vendor-alert');
+        const msg = document.getElementById('vendor-alert-msg');
+        box.style.display = 'flex';
+        box.className = `alert alert-${type} show`;
+        msg.textContent = text;
+        clearTimeout(box._timer);
+        box._timer = setTimeout(() => { box.classList.remove('show'); setTimeout(()=> box.style.display='none', 300); }, 5000);
+    }
+
+
+
+    async function fetchProducts() {
+        const list = document.getElementById('products-list');
+        try {
+            const res = await fetch(`${BASE_URL}/vendor/products.php`, { credentials: 'include' });
+            const data = await res.json();
+            
+            if (data.success) {
+                if (data.products.length === 0) {
+                    list.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--clr-muted);">You have no products listed. Click 'List New Product' to get started.</div>`;
+                    return;
+                }
+                
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Listing Date</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                data.products.forEach(p => {
+                    const d = new Date(p.created_at).toLocaleDateString();
+                    // Robust path construction
+                    let imgUrl = 'https://placehold.co/50x50?text=No+Img';
+                    if (p.main_image && p.main_image.trim()) {
+                        const cleanPath = p.main_image.trim().replace(/\\/g, '/');
+                        imgUrl = `/Ecommerce_site/Backend/${cleanPath}`;
+                    }
+                    html += `
+                        <tr>
+                            <td style="display:flex; align-items:center; gap:1rem;">
+                                <img src="${imgUrl}" 
+                                     onerror="this.src='https://placehold.co/50x50?text=Error'"
+                                     style="width:40px; height:40px; border-radius:4px; object-fit:cover; border:1px solid var(--clr-border);">
+                                <span style="font-weight:600;">${escapeHTML(p.name)}</span>
+                            </td>
+                            <td style="color:var(--clr-muted);">${d}</td>
+                            <td>$${Number(p.lowest_price).toFixed(2)}</td>
+                            <td>${p.total_stock}</td>
+                            <td><span style="padding:0.2rem 0.5rem; border-radius:99px; font-size:0.8rem; background:rgba(16,185,129,0.1); color:#10b981;">${p.status.toUpperCase()}</span></td>
+                            <td>
+                                <button onclick='populateForm(${JSON.stringify(p).replace(/'/g, "&apos;")})' style="background:transparent; border:none; color:var(--clr-primary); cursor:pointer; font-size:1.1rem;" title="Edit Product"><i class="ph ph-pencil-simple"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `</tbody></table>`;
+                list.innerHTML = html;
+            } else {
+                list.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--clr-error); font-weight:600;">Error: ${data.message}</div>`;
+            }
+        } catch(err) {
+            console.error(err);
+            list.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--clr-error);">Network error or session expired. Please refresh the page.</div>`;
+        }
+    }
+
+    function setupForm() {
+        document.getElementById('add-product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-product');
+            btn.classList.add('loading'); btn.disabled = true;
+            
+            const formData = new FormData();
+            formData.append('id', document.getElementById('p-id').value);
+            formData.append('existing_image', document.getElementById('p-existing-image').value);
+            formData.append('name', document.getElementById('p-name').value);
+            formData.append('brand', document.getElementById('p-brand').value);
+            formData.append('category_id', document.getElementById('p-cat').value);
+            formData.append('price', document.getElementById('p-price').value);
+            formData.append('stock', document.getElementById('p-stock').value);
+            formData.append('description', document.getElementById('p-desc').value);
+            
+            const imageFile = document.getElementById('p-image').files[0];
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
+            
+            try {
+                const res = await fetch(`${BASE_URL}/vendor/products.php`, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if(data.success) {
+                    toggleModal('add-product-modal', false);
+                    showAlert(data.message, 'success');
+                    fetchProducts();
+                } else {
+                    showAlert(data.message);
+                }
+            } catch(e) { showAlert("Network error"); }
+            finally {
+                btn.classList.remove('loading'); btn.disabled = false;
+            }
+        });
+    }
+
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>'"]/g, 
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])
+        );
+    }
+
+    function populateForm(p) {
+        document.getElementById('p-id').value = p.id;
+        document.getElementById('p-existing-image').value = p.main_image || '';
+        document.getElementById('p-name').value = p.name;
+        document.getElementById('p-brand').value = p.brand || '';
+        document.getElementById('p-cat').value = p.category_id || 1;
+        document.getElementById('p-price').value = p.lowest_price;
+        document.getElementById('p-stock').value = p.total_stock;
+        document.getElementById('p-desc').value = p.description || '';
+        
+        document.querySelector('#add-product-modal h3').textContent = 'Edit Product';
+        document.getElementById('btn-save-product').textContent = 'Save Changes';
+        toggleModal('add-product-modal', true);
+    }
+
+    // Reset modal title when adding new
+    const originalToggleModal = toggleModal;
+    toggleModal = function(id, show) {
+        if (show && id === 'add-product-modal' && document.getElementById('p-id').value == '0') {
+            document.querySelector('#add-product-modal h3').textContent = 'List New Product';
+            document.getElementById('btn-save-product').textContent = 'Publish Product';
+        }
+        originalToggleModal(id, show);
+        if(!show) {
+            document.getElementById('p-id').value = '0';
+            document.getElementById('p-existing-image').value = '';
+        }
+    }
+  </script>
+</body>
+</html>
+

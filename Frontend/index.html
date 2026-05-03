@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopVerse — Shop Smarter, Live Better</title>
+  <meta name="description" content="Welcome to ShopVerse. Browse our premium products." />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
+  <script src="js/session_check.js"></script>
+</head>
+<body>
+  <!-- Navigation -->
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="index.html" class="logo">✦ ShopVerse</a>
+      <nav class="nav-links">
+        <a href="index.html">All Products</a>
+      </nav>
+      <div class="nav-actions">
+        <!-- Replaced dynamically by JS based on login state -->
+        <div id="auth-actions">
+           <a href="login.html" class="btn-ghost">Sign In</a>
+           <a href="register.html" class="btn-primary-sm">Create Account</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="index-main">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <h1>Welcome to the Future of Commerce.</h1>
+        <p>Premium quality. Unbeatable prices. Delivered to your door.</p>
+        <div class="hero-buttons">
+          <a href="#products-grid" class="btn-primary">Shop Now</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Products Grid -->
+    <section class="featured-products">
+      <div class="section-header">
+        <h2>Latest Arrivals</h2>
+      </div>
+
+      <!-- Container built by JS -->
+      <div id="products-grid" class="product-grid">
+         <div class="loading-state">Loading products...</div>
+      </div>
+    </section>
+  </main>
+
+  <style>
+    /* Add base layout rules over auth-specific style.css */
+    .site-header {
+      background: var(--clr-surface);
+      border-bottom: 1px solid var(--clr-border);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: var(--grad-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .nav-links a { margin-right: 1.5rem; font-weight: 500; transition: var(--trans-fast); }
+    .nav-links a:hover { color: var(--clr-primary-light); }
+    .btn-ghost { padding: 0.5rem 1rem; font-weight: 600; }
+    .btn-primary-sm {
+      padding: 0.5rem 1rem; background: var(--grad-primary); border-radius: var(--radius-sm);
+      font-weight: 600; transition: var(--trans-slow); color: #fff;
+    }
+    .hero-section {
+      text-align: center;
+      padding: 6rem 1rem;
+      background: var(--grad-glow);
+    }
+    .hero-content h1 { font-size: 3rem; margin-bottom: 1rem; }
+    .hero-content p { font-size: 1.2rem; color: var(--clr-muted); margin-bottom: 2rem; }
+    .featured-products { max-width: 1200px; margin: 4rem auto; padding: 0 1rem; }
+    .product-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem;
+    }
+    .product-card {
+      background: var(--clr-surface-2); border: 1px solid var(--clr-border);
+      border-radius: var(--radius-md); overflow: hidden; transition: var(--trans-normal);
+    }
+    .product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-glow); }
+    .product-image {
+      height: 220px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;
+      color: var(--clr-muted); font-size: 4rem; overflow: hidden;
+    }
+    .product-details { padding: 1.5rem; }
+    .product-brand { font-size: 0.8rem; color: var(--clr-accent); font-weight: 600; text-transform: uppercase; }
+    .product-title { font-size: 1.1rem; font-weight: 700; margin: 0.5rem 0; color: #fff; }
+    .product-desc { font-size: 0.9rem; color: var(--clr-muted); margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+    .product-footer { display: flex; justify-content: space-between; align-items: center; }
+    .product-price { font-size: 1.2rem; font-weight: 800; color: #fff; }
+    .add-to-cart { background: var(--clr-primary); color: #fff; border: none; padding: 0.5rem 0.8rem; border-radius: 99px; cursor: pointer; transition: var(--trans-fast); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;}
+    .add-to-cart:hover { background: var(--clr-primary-light); transform: scale(1.05); }
+  </style>
+
+  <script src="js/catalog.js?v=2"></script>
+</body>
+</html>
+

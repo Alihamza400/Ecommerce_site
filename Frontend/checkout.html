@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout — ShopVerse</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
+  <script src="js/session_check.js"></script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="index.html" class="logo">✦ ShopVerse</a>
+      <nav class="nav-links">
+        <a href="index.html">All Products</a>
+      </nav>
+      <div class="nav-actions">
+        <div id="auth-actions">
+           <div class="loading-state" style="font-size:0.8rem">Authenticating...</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="checkout-main" style="max-width: 1200px; margin: 4rem auto; padding: 0 1rem;">
+    <div class="section-header" style="margin-bottom: 2rem;">
+      <h2 style="font-size: 2rem;">Secure Checkout</h2>
+    </div>
+
+    <!-- Alert System -->
+    <div class="alert alert-error" id="checkout-alert" role="alert" style="margin-bottom: 2rem;">
+        <i class="ph ph-warning-circle"></i><span id="checkout-alert-msg"></span>
+    </div>
+
+    <div class="checkout-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; align-items: start;">
+        
+        <!-- Left Side: Forms -->
+        <div class="checkout-forms">
+            
+            <!-- Address Selection -->
+            <div class="checkout-panel" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1.25rem; display:flex; align-items:center; gap:0.5rem;"><i class="ph ph-map-pin"></i> Shipping Address</h3>
+                    <a href="profile.html" class="btn-ghost" style="font-size:0.8rem;">Manage Addresses</a>
+                </div>
+                <div id="address-selection" style="display:grid; grid-template-columns:1fr; gap:1rem;">
+                    <div class="loading-state">Loading your addresses...</div>
+                </div>
+            </div>
+
+            <!-- Payment Method — Now powered by Payment Orchestrator -->
+            <div class="checkout-panel" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 2rem;">
+                <h3 style="font-size: 1.25rem; display:flex; align-items:center; gap:0.5rem; margin-bottom: 0.5rem;">
+                    <i class="ph ph-credit-card"></i> Payment Method
+                </h3>
+                <p style="font-size:0.8rem; color:var(--clr-muted); margin-bottom:1.5rem;">
+                    Powered by <strong style="color:var(--clr-primary-light);">ShopVerse Payment Orchestrator</strong> — auto-routes to the best gateway.
+                </p>
+                
+                <!-- Country & Currency (used by routing engine) -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Country</label>
+                        <select class="form-input" id="pay-country" onchange="onCountryChange(this.value)" style="padding-left:1rem;">
+                            <option value="PK">🇵🇰 Pakistan (PKR)</option>
+                            <option value="US">🇺🇸 United States (USD)</option>
+                            <option value="GB">🇬🇧 United Kingdom (GBP)</option>
+                            <option value="AE">🇦🇪 UAE (AED)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Currency</label>
+                        <select class="form-input" id="pay-currency" style="padding-left:1rem;">
+                            <option value="PKR">PKR — Pakistani Rupee</option>
+                            <option value="USD">USD — US Dollar</option>
+                            <option value="GBP">GBP — British Pound</option>
+                            <option value="AED">AED — UAE Dirham</option>
+                            <option value="USDT">USDT — Tether (TRC20)</option>
+                            <option value="BTC">BTC — Bitcoin</option>
+                            <option value="ETH">ETH — Ethereum (ERC20)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Payment Method Cards -->
+                <div class="payment-options" id="payment-options" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; margin-bottom:1.5rem;"></div>
+
+                <!-- Gateway Indicator -->
+                <div id="gateway-hint" style="font-size:0.8rem; color:var(--clr-muted); padding:0.75rem 1rem; background:rgba(124,58,237,0.05); border:1px solid var(--clr-border); border-radius:var(--radius-sm); display:flex; align-items:center; gap:0.5rem;">
+                    <i class="ph ph-info"></i>
+                    <span id="gateway-hint-text">The Orchestrator will auto-select the best gateway for your region.</span>
+                </div>
+
+                <!-- Dynamic Payment Credentials UI -->
+                <div id="payment-credentials-container" style="margin-top:1.5rem; padding:1rem; border:1px solid var(--clr-border); border-radius:var(--radius-md); background:var(--clr-surface); display:none;">
+                    <!-- Injected by checkout.js based on selection -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Order Summary -->
+        <div class="checkout-summary" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 1.5rem; position: sticky; top: 100px;">
+            <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Order Summary</h3>
+            
+            <div id="checkout-items" style="margin-bottom: 2rem; max-height: 300px; overflow-y:auto; border-bottom: 1px solid var(--clr-border); padding-bottom: 1rem;">
+                <div class="loading-state">Loading cart payload...</div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin-bottom: 0.5rem;">
+                <span style="color:var(--clr-muted);">Subtotal</span>
+                <span id="checkout-subtotal">—</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 1.5rem;">
+                <span style="color:var(--clr-muted);">Shipping</span>
+                <span style="color: #10b981;">Free</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:1.2rem; border-top:1px solid var(--clr-border); padding-top:1rem; margin-bottom:2rem;">
+                <span>Total</span>
+                <span id="checkout-total">—</span>
+            </div>
+
+            <!-- Payment status indicator -->
+            <div id="payment-status" style="display:none; margin-bottom:1rem; padding:0.75rem 1rem; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600;"></div>
+
+            <button id="btn-place-order" class="btn-primary" style="width:100%; padding:1rem; font-size:1rem; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+                <i class="ph ph-lock-key"></i> Place Order Securely
+            </button>
+            <p style="text-align:center; font-size:0.75rem; color:var(--clr-muted); margin-top:0.75rem;">
+                <i class="ph ph-shield-check"></i> 256-bit SSL Encrypted via ShopVerse Orchestrator
+            </p>
+        </div>
+    </div>
+  </main>
+
+  <style>
+    .site-header { background: var(--clr-surface); border-bottom: 1px solid var(--clr-border); padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; }
+    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-size: 1.5rem; font-weight: 800; background: var(--grad-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links a { margin-right: 1.5rem; font-weight: 500; }
+    .btn-ghost { padding: 0.5rem 1rem; font-weight: 600; cursor:pointer; }
+
+    .addr-option { display: flex; padding: 1rem; border: 1.5px solid var(--clr-border); border-radius: var(--radius-sm); cursor: pointer; transition: var(--trans-fast); }
+    .addr-option.selected { border-color: var(--clr-primary); background: rgba(124,58,237,0.06); }
+    .addr-option:hover { border-color: rgba(255,255,255,0.2); }
+
+    /* Payment method cards */
+    .pay-card { display:flex; flex-direction:column; align-items:center; gap:0.5rem; padding:1rem 0.75rem; border:2px solid var(--clr-border); border-radius:var(--radius-sm); cursor:pointer; transition:all 0.2s; text-align:center; background:var(--clr-surface); }
+    .pay-card:hover { border-color: rgba(255,255,255,0.25); transform:translateY(-2px); }
+    .pay-card.active { border-color: var(--clr-primary); background: rgba(124,58,237,0.08); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+    .pay-card i { font-size:1.8rem; }
+    .pay-card span { font-size:0.75rem; font-weight:700; }
+    .pay-card.disabled { opacity:0.4; cursor:not-allowed; pointer-events:none; }
+
+    .checkout-item { display:flex; align-items:center; gap:1rem; padding:0.75rem 0; border-bottom:1px solid var(--clr-border); }
+    .checkout-item:last-child { border-bottom:none; }
+    .checkout-item-img { width:44px; height:44px; background: rgba(255,255,255,0.05); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+    .checkout-item-details { flex:1; }
+    .checkout-item-title { font-weight:600; font-size:0.9rem; }
+    .checkout-item-qty { font-size:0.8rem; color:var(--clr-muted); margin-top:0.15rem; }
+    .checkout-item-price { font-weight:700; white-space:nowrap; }
+
+    @media (max-width: 768px) {
+        .checkout-layout { grid-template-columns: 1fr !important; }
+        #payment-options { grid-template-columns: 1fr 1fr !important; }
+    }
+  </style>
+
+  <script src="js/checkout.js?v=3"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order History — ShopVerse</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
+  <script src="js/session_check.js"></script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="index.html" class="logo">✦ ShopVerse</a>
+      <nav class="nav-links">
+        <a href="index.html">All Products</a>
+      </nav>
+      <div class="nav-actions">
+        <div id="auth-actions">
+           <div class="loading-state" style="font-size:0.8rem">Authenticating...</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="orders-main" style="max-width: 1000px; margin: 4rem auto; padding: 0 1rem;">
+    <div class="section-header" style="margin-bottom: 2rem;">
+      <h2 style="font-size: 2rem;">Your Orders</h2>
+    </div>
+
+    <!-- Alert System -->
+    <div class="alert alert-error" id="orders-alert" role="alert" style="margin-bottom: 2rem; display:none;">
+        <i class="ph ph-warning-circle"></i><span id="orders-alert-msg"></span>
+    </div>
+
+    <div id="orders-list">
+        <div class="loading-state">Fetching your order history...</div>
+    </div>
+
+  </main>
+
+  <style>
+    .site-header { background: var(--clr-surface); border-bottom: 1px solid var(--clr-border); padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; }
+    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-size: 1.5rem; font-weight: 800; background: var(--grad-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links a { margin-right: 1.5rem; font-weight: 500; transition: var(--trans-fast); }
+    .nav-links a:hover { color: var(--clr-primary-light); }
+    
+    .order-card { background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; transition: var(--trans-fast); }
+    .order-card:hover { border-color: rgba(255,255,255,0.2); }
+    .order-meta { display: flex; flex-direction: column; gap: 0.5rem; }
+    .order-id { font-weight: 700; font-size: 1.1rem; color: #fff; }
+    .order-date { font-size: 0.85rem; color: var(--clr-muted); }
+    
+    .order-status { font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.75rem; border-radius: 99px; text-transform: uppercase; }
+    .status-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .status-shipped, .status-delivered, .status-confirmed { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+    
+    .order-price { font-size: 1.25rem; font-weight: 800; color: var(--clr-primary-light); text-align: right; }
+  </style>
+
+  <script>
+    const BASE_URL = '/Ecommerce_site/Backend';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchOrders();
+    });
+
+
+
+    async function fetchOrders() {
+        const list = document.getElementById('orders-list');
+        try {
+            const res = await fetch(`${BASE_URL}/orders.php`, { credentials: 'include' });
+            if (res.status === 401) return; // handled by loadGlobalAuth
+            const data = await res.json();
+            
+            if (data.success) {
+                if (data.orders.length === 0) {
+                    list.innerHTML = `
+                        <div style="text-align:center; padding: 4rem 1rem; border: 1px dashed var(--clr-border); border-radius: var(--radius-md);">
+                            <i class="ph ph-package" style="font-size: 3rem; color:var(--clr-muted); margin-bottom:1rem;"></i>
+                            <h3 style="margin-bottom:0.5rem;">No orders yet</h3>
+                            <p style="color:var(--clr-muted); margin-bottom:1.5rem;">Looks like you haven't bought anything.</p>
+                            <a href="index.html" class="btn-primary-sm">Start Shopping</a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                data.orders.forEach(o => {
+                    const statusClass = (o.status === 'pending') ? 'status-pending' : 'status-confirmed';
+                    const dateObj = new Date(o.created_at);
+                    
+                    html += `
+                        <div class="order-card">
+                            <div class="order-meta">
+                                <span class="order-id">Order #${o.uuid.split('-')[0].toUpperCase()}</span>
+                                <span class="order-date">${dateObj.toLocaleDateString()} at ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                <div><span class="order-status ${statusClass}">${o.status}</span></div>
+                            </div>
+                            <div class="order-price">
+                                $${Number(o.total_amount).toFixed(2)}
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            }
+        } catch(err) {
+            list.innerHTML = '<div class="alert alert-error">Network error.</div>';
+        }
+    }
+  </script>
+</body>
+</html>
+
+

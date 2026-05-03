@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Become a Seller — ShopVerse</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
+  <script src="js/session_check.js"></script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="index.html" class="logo">✦ ShopVerse</a>
+      <nav class="nav-links">
+        <a href="index.html">All Products</a>
+      </nav>
+      <div class="nav-actions">
+        <div id="auth-actions">
+           <div class="loading-state" style="font-size:0.8rem">Authenticating...</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="vendor-main" style="max-width: 600px; margin: 4rem auto; padding: 0 1rem;">
+    <div class="section-header" style="text-align: center; margin-bottom: 2rem;">
+      <i class="ph ph-storefront" style="font-size: 4rem; color: var(--clr-primary-light); margin-bottom: 1rem;"></i>
+      <h2 style="font-size: 2.5rem;">Sell on ShopVerse</h2>
+      <p style="color: var(--clr-muted); margin-top: 0.5rem;">Join thousands of automated sellers. Apply for a vendor account today!</p>
+    </div>
+
+    <!-- Alert System -->
+    <div class="alert alert-error" id="vendor-alert" role="alert" style="margin-bottom: 2rem; display:none;">
+        <i class="ph ph-warning-circle"></i><span id="vendor-alert-msg"></span>
+    </div>
+
+    <div class="checkout-panel" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 2.5rem;">
+        
+        <div id="status-card" style="display:none; text-align:center; padding: 2rem 0;">
+            <i class="ph ph-hourglass-high" style="font-size:3rem; color:var(--clr-primary); margin-bottom:1rem;"></i>
+            <h3>Application Pending</h3>
+            <p style="color:var(--clr-muted); margin-top:0.5rem;">An admin is currently reviewing your application. You will be notified when your account upgrades.</p>
+        </div>
+
+        <form id="vendor-app-form">
+            <div class="form-group">
+                <label class="form-label" for="store-name">Desired Store Name</label>
+                <div class="input-wrapper">
+                    <input class="form-input" type="text" id="store-name" name="store-name" placeholder="e.g. Acme Electrics" required />
+                    <i class="ph ph-tag input-icon"></i>
+                </div>
+            </div>
+
+            <div class="form-check" style="margin-top:2rem;">
+                <input type="checkbox" id="vendor-terms" required />
+                <label class="form-check-label" for="vendor-terms" style="font-size:0.9rem;">I agree to the Vendor Service Agreement & commission structure.</label>
+            </div>
+
+            <button type="submit" class="btn-primary" style="margin-top: 2rem; width: 100%; padding: 1rem; font-size: 1.1rem;" id="btn-submit">
+                <span class="btn-text">Submit Application</span><span class="btn-spinner"></span>
+            </button>
+        </form>
+    </div>
+  </main>
+
+  <style>
+    .site-header { background: var(--clr-surface); border-bottom: 1px solid var(--clr-border); padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; }
+    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-size: 1.5rem; font-weight: 800; background: var(--grad-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links a { margin-right: 1.5rem; font-weight: 500; transition: var(--trans-fast); }
+    .nav-links a:hover { color: var(--clr-primary-light); }
+  </style>
+
+  <script>
+    const BASE_URL = '/Ecommerce_site/Backend';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        checkAppStatus();
+        setupForm();
+    });
+
+    function showAlert(text, type='error') {
+        const box = document.getElementById('vendor-alert');
+        const msg = document.getElementById('vendor-alert-msg');
+        box.style.display = 'flex';
+        box.className = `alert alert-${type} show`;
+        msg.textContent = text;
+        clearTimeout(box._timer);
+        box._timer = setTimeout(() => { box.classList.remove('show'); setTimeout(()=> box.style.display='none', 300); }, 5000);
+    }
+
+
+
+    async function checkAppStatus() {
+        try {
+            const res = await fetch(`${BASE_URL}/vendor_app.php`, { credentials: 'include' });
+            const data = await res.json();
+            if(data.applied) {
+                document.getElementById('vendor-app-form').style.display = 'none';
+                document.getElementById('status-card').style.display = 'block';
+                if(data.status === 'active') {
+                    document.getElementById('status-card').innerHTML = `
+                        <i class="ph ph-check-circle" style="font-size:3rem; color:var(--clr-primary); margin-bottom:1rem;"></i>
+                        <h3>Application Approved!</h3>
+                        <p style="margin: 1rem 0; color:var(--clr-muted);">Important: Your account role has been upgraded. Please <strong>Logout</strong> and <strong>Login</strong> again to activate your Seller Hub access.</p>
+                        <p style="margin-top:1rem;"><a href="vendor/dashboard.html" class="btn-primary-sm">Go to Seller Dashboard</a></p>
+                    `;
+                }
+            }
+        } catch(e) {}
+    }
+
+    function setupForm() {
+        document.getElementById('vendor-app-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            btn.classList.add('loading'); btn.disabled = true;
+            
+            try {
+                const fd = JSON.stringify({ store_name: document.getElementById('store-name').value });
+                const res = await fetch(`${BASE_URL}/vendor_app.php`, {
+                    method: 'POST', body: fd, headers:{'Content-Type':'application/json'}, credentials: 'include'
+                });
+                const data = await res.json();
+                if(data.success) {
+                    showAlert(data.message, 'success');
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    showAlert(data.message);
+                    btn.classList.remove('loading'); btn.disabled = false;
+                }
+            } catch(e) {
+                showAlert("Network Error");
+                 btn.classList.remove('loading'); btn.disabled = false;
+            }
+        });
+    }
+  </script>
+</body>
+</html>
+

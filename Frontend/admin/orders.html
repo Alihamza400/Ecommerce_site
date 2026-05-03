@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Orders | Admin Dashboard</title>
+    
+    <!-- Design Foundation -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    
+    <!-- Icons & Fonts -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+    <div class="admin-container" id="admin-main">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">ShopVerse Elite</div>
+            
+            <nav class="nav-list">
+                <a href="dashboard.html" class="nav-link">
+                    <i class="ph ph-squares-four"></i> Dashboard
+                </a>
+                <a href="orders.html" class="nav-link active">
+                    <i class="ph ph-shopping-cart"></i> Orders
+                </a>
+                <a href="products.html" class="nav-link">
+                    <i class="ph ph-package"></i> Products
+                </a>
+                <a href="payments.html" class="nav-link">
+                    <i class="ph ph-credit-card"></i> Payments
+                </a>
+                <a href="vendors.html" class="nav-link">
+                    <i class="ph ph-storefront"></i> Vendors
+                </a>
+                <a href="users.html" class="nav-link">
+                    <i class="ph ph-users"></i> Customers
+                </a>
+            </nav>
+
+            <div style="margin-top: auto;">
+                <a href="../index.html" class="nav-link">
+                    <i class="ph ph-arrow-left"></i> Back to Store
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="header-flex">
+                <div>
+                    <h1 class="page-title">Order Management</h1>
+                    <p style="color: var(--clr-muted);">Fulfill and track all customer purchases.</p>
+                </div>
+                
+                <div style="display:flex; gap:1rem;">
+                    <button class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;" onclick="loadOrders()">
+                        <i class="ph ph-arrows-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="ph ph-shopping-bag"></i></div>
+                    <div>
+                        <span class="stat-value" id="stat-total">0</span>
+                        <span class="stat-label">Total Orders</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(245,158,11,0.1); color:var(--clr-warning);">
+                        <i class="ph ph-clock"></i>
+                    </div>
+                    <div>
+                        <span class="stat-value" id="stat-pending">0</span>
+                        <span class="stat-label">Pending</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(6,182,212,0.1); color:var(--clr-accent);">
+                        <i class="ph ph-truck"></i>
+                    </div>
+                    <div>
+                        <span class="stat-value" id="stat-shipped">0</span>
+                        <span class="stat-label">Shipped</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(16,185,129,0.1); color:var(--clr-success);">
+                        <i class="ph ph-check-circle"></i>
+                    </div>
+                    <div>
+                        <span class="stat-value" id="stat-delivered">0</span>
+                        <span class="stat-label">Completed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter & Search Bar -->
+            <div class="table-controls" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; gap:1rem;">
+                <div class="filter-tabs" style="display:flex; gap:0.5rem; background:var(--clr-surface-2); padding:0.4rem; border-radius:var(--radius-md); border:1px solid var(--clr-border);">
+                    <button class="filter-btn active" onclick="filterByStatus('all')">All</button>
+                    <button class="filter-btn" onclick="filterByStatus('pending')">Pending</button>
+                    <button class="filter-btn" onclick="filterByStatus('processing')">Processing</button>
+                    <button class="filter-btn" onclick="filterByStatus('shipped')">Shipped</button>
+                    <button class="filter-btn" onclick="filterByStatus('delivered')">Completed</button>
+                </div>
+
+                <div class="search-box" style="flex:1; max-width:400px; position:relative;">
+                    <i class="ph ph-magnifying-glass" style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--clr-muted);"></i>
+                    <input type="text" id="order-search" placeholder="Search by ID, Name or City..." style="width:100%; padding:0.75rem 1rem 0.75rem 2.75rem; background:var(--clr-surface-2); border:1px solid var(--clr-border); border-radius:var(--radius-md); color:#fff; outline:none;" onkeyup="searchOrders()">
+                </div>
+            </div>
+
+            <!-- Order Table -->
+            <div class="order-table-container">
+                <div class="table-header">
+                    <h2 style="font-size: 1.1rem;">Recent Orders</h2>
+                    <div style="font-size: 0.8rem; color: var(--clr-muted);">Sorted by Newest</div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table id="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-tbody">
+                            <!-- JS will inject rows here -->
+                            <tr>
+                                <td colspan="6" style="text-align:center; padding: 4rem;">
+                                    <div class="btn-spinner" style="display:block; border-top-color:var(--clr-primary);"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="order-modal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:1000; backdrop-filter:blur(8px); align-items:center; justify-content:center;">
+        <div class="modal-content" style="background:var(--clr-surface); border:1px solid var(--clr-border); width:90%; max-width:800px; border-radius:var(--radius-xl); overflow:hidden; animation:fadeUp 0.3s ease;">
+            <div class="modal-header" style="padding:1.5rem 2rem; border-bottom:1px solid var(--clr-border); display:flex; justify-content:space-between; align-items:center;">
+                <h2 id="modal-title">Order Details</h2>
+                <button class="btn-action" onclick="closeModal()"><i class="ph ph-x"></i></button>
+            </div>
+            <div id="modal-body" style="padding:2rem; max-height:70vh; overflow-y:auto;">
+                <!-- Content injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert / Toast -->
+    <div id="admin-alert" class="alert" style="position:fixed; bottom:2rem; right:2rem; z-index:100; margin-bottom:0; width:320px;">
+        <span id="admin-alert-msg"></span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/session_check.js"></script>
+    <script src="../js/admin_orders.js"></script>
+</body>
+</html>
