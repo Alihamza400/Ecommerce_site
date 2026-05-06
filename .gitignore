@@ -24,3 +24,10 @@ yarn-error.log
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Runtime logs and uploads
+Backend/error_log.txt
+Backend/uploads/products/
+PaymentSystem/logs/
+
+ecommerce-schema (1).sql

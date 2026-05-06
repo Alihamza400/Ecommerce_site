@@ -26,8 +26,8 @@ if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
     ini_set('session.cookie_samesite', 'Lax');
     ini_set('session.cookie_secure', 1);
 } else {
-    // Localhost / HTTP: Remove SameSite restriction to ensure cookie persists across redirects
-    ini_set('session.cookie_samesite', ''); 
+    // Localhost / HTTP: Set to Lax for compatibility
+    ini_set('session.cookie_samesite', 'Lax');
 }
 
 // ── Security Headers ──────────────────────────────────────────

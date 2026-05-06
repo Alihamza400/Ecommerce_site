@@ -2,7 +2,7 @@
 // ============================================================
 // login.php — Dedicated Backend API for Authentication
 // ============================================================
-$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : 'http://localhost';
+$origin = $_SERVER['HTTP_ORIGIN'] ?? 'null';
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: $origin");
 header("Access-Control-Allow-Credentials: true");
@@ -31,7 +31,7 @@ if (empty($data)) {
 }
 
 $email    = trim($data['email'] ?? '');
-$password = $data['password'] ?? '';
+$password = trim($data['password'] ?? '');
 $csrf_token = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
 
 // ── CSRF Validation ─────────────────────────────────────────

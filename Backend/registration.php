@@ -2,7 +2,7 @@
 // ============================================================
 // registration.php — Dedicated Backend API for Registration
 // ============================================================
-$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : 'http://localhost';
+$origin = $_SERVER['HTTP_ORIGIN'] ?? 'null';
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: $origin");
 header("Access-Control-Allow-Credentials: true");
@@ -34,7 +34,7 @@ if (empty($data)) {
 $name     = trim($data['name'] ?? '');
 $email    = trim($data['email'] ?? '');
 $phone    = trim($data['phone'] ?? '');
-$password = $data['password'] ?? '';
+$password = trim($data['password'] ?? '');
 $confirm  = $data['confirm_password'] ?? '';
 $csrf_token = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
 

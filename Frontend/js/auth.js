@@ -1,7 +1,7 @@
 // ============================================================
 // auth.js — Accurate & Optimized Decoupled API logic
 // ============================================================
-const BASE_URL = '/Ecommerce_site/Backend';
+const BASE_URL = 'http://localhost/Ecommerce_site/Backend';
 
 let csrfToken = null;
 

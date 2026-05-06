@@ -6,7 +6,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/security_functions.php';
 
-$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : 'http://localhost';
+$origin = $_SERVER['HTTP_ORIGIN'] ?? 'null';
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: $origin");
 header("Access-Control-Allow-Credentials: true");

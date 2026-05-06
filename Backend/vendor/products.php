@@ -36,20 +36,60 @@ function gen_uuid() {
     return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x', mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000, mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff));
 }
 
+function category_exists(mysqli $con, int $category_id): bool {
+    $stmt = $con->prepare("SELECT id FROM categories WHERE id = ? LIMIT 1");
+    $stmt->bind_param("i", $category_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $exists = $result->num_rows > 0;
+    $stmt->close();
+    return $exists;
+}
+
+function ensure_default_categories(mysqli $con): void {
+    $count = $con->query("SELECT COUNT(*) AS total FROM categories")->fetch_assoc()['total'];
+    if ((int)$count === 0) {
+        $defaults = ['Electronics', 'Fashion', 'Home & Garden'];
+        $stmt = $con->prepare("INSERT INTO categories (name) VALUES (?)");
+        foreach ($defaults as $name) {
+            $stmt->bind_param("s", $name);
+            $stmt->execute();
+        }
+        $stmt->close();
+    }
+}
+
+function create_default_category(mysqli $con): int {
+    $name = 'General';
+    $stmt = $con->prepare("INSERT INTO categories (name) VALUES (?)");
+    $stmt->bind_param("s", $name);
+    $stmt->execute();
+    $id = $stmt->insert_id;
+    $stmt->close();
+    return $id;
+}
+
 // ── GET: View Vendor's Products ─────────────────────────────
 if ($method === 'GET') {
     $sql = "
-        SELECT p.id, p.name, p.main_image, p.status, p.created_at, p.description, p.brand, pc.category_id,
-               MIN(v.price) as lowest_price, SUM(v.stock) as total_stock
+        SELECT p.id, p.name, p.main_image, p.status, p.created_at, p.description, p.brand,
+               COALESCE(MIN(pc.category_id), 1) AS category_id,
+               MIN(v.price) AS lowest_price, SUM(v.stock) AS total_stock
         FROM products p
         LEFT JOIN product_variants v ON p.id = v.product_id
         LEFT JOIN product_categories pc ON p.id = pc.product_id
         WHERE p.vendor_id = ?
-        GROUP BY p.id
+        GROUP BY p.id, p.name, p.main_image, p.status, p.created_at, p.description, p.brand
         ORDER BY p.created_at DESC
     ";
     
     $stmt = $con->prepare($sql);
+    if (!$stmt) {
+        http_response_code(500);
+        echo json_encode(["success" => false, "message" => "Database query failed: " . $con->error]);
+        exit();
+    }
+
     $stmt->bind_param("i", $vendor_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -74,7 +114,14 @@ if ($method === 'POST') {
     $category_id = intval($_POST['category_id'] ?? 1);
     $price = floatval($_POST['price'] ?? 0);
     $stock = intval($_POST['stock'] ?? 0);
-    
+
+    ensure_default_categories($con);
+    if ($category_id <= 0 || !category_exists($con, $category_id)) {
+        http_response_code(400);
+        echo json_encode(["success"=>false,"message"=>"Invalid category selected."]);
+        exit();
+    }
+
     if(empty($name) || $price <= 0) {
         http_response_code(400); echo json_encode(["success"=>false,"message"=>"Name and valid price required."]); exit();
     }
