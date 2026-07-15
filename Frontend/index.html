@@ -7,9 +7,10 @@
   <meta name="description" content="Welcome to ShopVerse. Browse our premium products." />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/ai_assistant.css" />
+  <link rel="stylesheet" href="css/animations.css?v=9291" />
   <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
-  <script src="js/session_check.js"></script>
-  <script src="js/ai_assistant.js" defer></script>
+  <script src="js/session_check.js?v=4"></script>
+  <script src="js/ai_assistant.js?v=4" defer></script>
 </head>
 <body>
   <!-- Navigation -->
@@ -22,28 +23,114 @@
       
       <div class="search-container">
         <i class="ph ph-magnifying-glass search-icon"></i>
-        <input type="text" id="ai-search-input" placeholder="Search with AI (e.g. 'summer beach wear')" class="search-input">
+        <input type="text" id="ai-search-input" placeholder="Search with AI — text, voice, or image" class="search-input">
+        <button id="voice-search-btn" class="search-action-btn" title="Search by voice" onclick="startVoiceSearch()">
+          <i class="ph ph-microphone"></i>
+        </button>
+        <button id="image-search-btn" class="search-action-btn" title="Search by image" onclick="document.getElementById('image-search-input').click()">
+          <i class="ph ph-camera"></i>
+        </button>
+        <input type="file" id="image-search-input" accept="image/*" style="display:none" onchange="handleImageSearch(this)">
         <div id="ai-search-results" class="semantic-search-results"></div>
       </div>
 
       <div class="nav-actions">
         <!-- Replaced dynamically by JS based on login state -->
         <div id="auth-actions">
-           <a href="login.html" class="btn-ghost">Sign In</a>
-           <a href="register.html" class="btn-primary-sm">Create Account</a>
+      <a href="login.html" class="btn-ghost">Sign In</a>
+            <a href="register.html" class="btn-primary-sm">Create Account</a>
         </div>
       </div>
     </div>
   </header>
 
+  <!-- ── Tracing Beam (Aceternity) ── -->
+  <div class="tracing-beam"><div class="tracing-beam-line"></div></div>
+
   <main id="index-main">
-    <!-- Hero Section -->
-    <section class="hero-section">
+    <!-- Hero Section - Guest (Aceternity Components) -->
+    <section class="hero-section" id="guest-cta-section">
+      <!-- Aceternity: Grid Background -->
+      <div class="aceternity-grid-bg"></div>
+      <!-- Aceternity: Spotlight -->
+      <div class="spotlight" id="spotlight"></div>
+      <!-- Aceternity: Lamp Effect -->
+      <div class="lamp-container"><div class="lamp-glow"></div><div class="lamp-line"></div></div>
+
       <div class="hero-content">
-        <h1>Welcome to the Future of Commerce.</h1>
-        <p>Premium quality. Unbeatable prices. Delivered to your door.</p>
-        <div class="hero-buttons">
-          <a href="#products-grid" class="btn-primary">Shop Now</a>
+        <!-- Aceternity: Moving Border Badge -->
+        <div class="moving-border-badge stagger-item" style="animation-delay:0.1s;">
+          <span class="badge-dot"></span> #1 AI-POWERED MARKETPLACE
+          <div class="moving-border-badge-inner"></div>
+        </div>
+        <!-- Aceternity: Text Reveal -->
+        <h1 class="stagger-item text-reveal" style="animation-delay:0.2s;">
+          <span class="hero-highlight">Find What You Love</span><br>
+          <span class="hero-sub-text typewriter-text" id="typewriter-text"></span>
+        </h1>
+        <p class="hero-subtitle stagger-item" style="animation-delay:0.3s;">AI recommends products based on your taste. Search by voice, image, or text. <br><strong>Zero sign-up required to browse.</strong></p>
+        
+        <!-- Aceternity: Moving Border Buttons -->
+        <div class="hero-actions stagger-item" style="animation-delay:0.4s;">
+          <a href="register.html" class="aceternity-btn">
+            <span class="aceternity-btn-border"><span class="aceternity-btn-border-inner"></span></span>
+            <span class="aceternity-btn-content">
+              <span class="cta-text">Get Started Free</span>
+              <span class="cta-arrow"><i class="ph ph-arrow-right"></i></span>
+            </span>
+          </a>
+          <div class="aceternity-btn aceternity-btn-secondary" onclick="document.getElementById('ai-search-input').focus()">
+            <span class="aceternity-btn-border"><span class="aceternity-btn-border-inner"></span></span>
+            <span class="aceternity-btn-content">
+              <i class="ph ph-magnifying-glass"></i>
+              <span>Try AI Search</span>
+              <kbd>⌘K</kbd>
+            </span>
+          </div>
+        </div>
+
+        <!-- Aceternity: Stats with hover effect -->
+        <div class="hero-stats stagger-item" style="animation-delay:0.5s;">
+          <div class="hero-stat"><span class="stat-number"><span id="stat-products" class="count-up">0</span>+</span><span class="stat-label">Products</span></div>
+          <div class="hero-stat"><span class="stat-number"><span id="stat-users" class="count-up">0</span>+</span><span class="stat-label">Happy Users</span></div>
+          <div class="hero-stat"><span class="stat-number"><span id="stat-reviews" class="count-up">0</span>+</span><span class="stat-label">Reviews</span></div>
+          <div class="hero-stat"><span class="stat-number"><span id="stat-orders" class="count-up">0</span></span><span class="stat-label">Orders Fulfilled</span></div>
+        </div>
+      </div>
+
+      <!-- Aceternity: Evervault Card (Featured Preview) -->
+      <div class="evervault-card stagger-item" style="animation-delay:0.6s;">
+        <div class="evervault-card-border"><div class="evervault-card-border-inner"></div></div>
+        <div class="evervault-card-content">
+          <div class="preview-header"><span><i class="ph ph-lightning"></i> Trending Now</span></div>
+          <div class="preview-items" id="preview-items">
+            <div class="preview-skeleton"></div>
+            <div class="preview-skeleton"></div>
+            <div class="preview-skeleton"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hero Section - Member -->
+    <section class="hero-section member-hero" id="member-hero" style="display:none;">
+      <div class="aceternity-grid-bg"></div>
+      <div class="spotlight" id="spotlight-member"></div>
+      <div class="lamp-container"><div class="lamp-glow"></div><div class="lamp-line"></div></div>
+      <div class="hero-content">
+        <div class="moving-border-badge stagger-item" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3);color:#10b981;">
+          <span class="badge-dot" style="background:#10b981;"></span> WELCOME BACK, <span id="member-name">VALUED MEMBER</span>
+        </div>
+        <h1 class="stagger-item text-reveal"><span class="hero-highlight">Your Next Discovery</span><br><span class="hero-sub-text">Is Just a Click Away</span></h1>
+        <p class="hero-subtitle stagger-item">Use AI search to find exactly what you need. Your wishlist and cart are waiting.</p>
+        <div class="hero-actions stagger-item">
+          <a href="#products-grid" class="aceternity-btn" onclick="document.querySelector('.featured-products').scrollIntoView({behavior:'smooth'})">
+            <span class="aceternity-btn-border"><span class="aceternity-btn-border-inner"></span></span>
+            <span class="aceternity-btn-content">
+              <span class="cta-text">Continue Shopping</span>
+              <span class="cta-arrow"><i class="ph ph-arrow-right"></i></span>
+            </span>
+          </a>
         </div>
       </div>
     </section>
@@ -51,10 +138,9 @@
     <!-- Products Grid -->
     <section class="featured-products">
       <div class="section-header">
-        <h2>Latest Arrivals</h2>
+        <h2>All Products</h2>
+        <p style="color:var(--clr-muted);font-size:0.9rem;">Discover your next favorite thing</p>
       </div>
-
-      <!-- Container built by JS -->
       <div id="products-grid" class="product-grid">
          <div class="loading-state">Loading products...</div>
       </div>
@@ -62,11 +148,12 @@
   </main>
 
   <style>
-    /* Add base layout rules over auth-specific style.css */
     .site-header {
-      background: var(--clr-surface);
-      border-bottom: 1px solid var(--clr-border);
-      padding: 1rem 2rem;
+      background: rgba(10,10,20,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(124,58,237,0.1);
+      padding: 0.8rem 2rem;
       position: sticky;
       top: 0;
       z-index: 100;
@@ -95,6 +182,333 @@
     .btn-primary-sm {
       padding: 0.5rem 1rem; background: var(--grad-primary); border-radius: var(--radius-sm);
       font-weight: 600; transition: var(--trans-slow); color: #fff; white-space: nowrap;
+    }
+
+    /* ════════════════════════════════════════════════════════
+       ACETERNITY COMPONENTS
+       ════════════════════════════════════════════════════════ */
+
+    /* ── 1. Tracing Beam ──────────────────────────────── */
+    .tracing-beam {
+      position: fixed;
+      top: 0; left: 0;
+      width: 2px;
+      height: 100vh;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.4;
+      margin-left: 3rem;
+    }
+    .tracing-beam-line {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, transparent, #7c3aed 10%, #7c3aed 80%, transparent);
+      animation: tracingScroll 3s ease-in-out infinite;
+    }
+    @keyframes tracingScroll {
+      0% { transform: translateY(-100%); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(100%); opacity: 0; }
+    }
+
+    /* ── 2. Aceternity Grid Background ────────────────── */
+    .aceternity-grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(124,58,237,0.12) 1px, transparent 0);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, black 30%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, black 30%, transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── 3. Aceternity Spotlight ───────────────────────── */
+    .spotlight {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,0.1) 0%, transparent 70%);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      transition: left 0.1s ease, top 0.1s ease;
+    }
+
+    /* ── 4. Aceternity Lamp Effect ────────────────────── */
+    .lamp-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 300px;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .lamp-glow {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 400px;
+      height: 200px;
+      background: radial-gradient(ellipse at center, rgba(124,58,237,0.15) 0%, transparent 70%);
+      filter: blur(40px);
+    }
+    .lamp-line {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 200px;
+      background: linear-gradient(to bottom, transparent, rgba(124,58,237,0.4), transparent);
+    }
+
+    /* ── 5. Aceternity Moving Border Badge ────────────── */
+    .moving-border-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 1rem;
+      background: rgba(124,58,237,0.12);
+      border-radius: 99px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--clr-primary-light);
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .moving-border-badge-inner {
+      position: absolute;
+      inset: -1px;
+      border-radius: 99px;
+      z-index: -1;
+      background: conic-gradient(from 0deg, transparent, rgba(124,58,237,0.4), transparent, rgba(124,58,237,0.4), transparent);
+      animation: borderSpin 3s linear infinite;
+    }
+    @keyframes borderSpin { to { transform: rotate(360deg); } }
+    .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: #7c3aed; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+    /* ── 6. Aceternity Text Reveal ─────────────────────── */
+    .text-reveal {
+      perspective: 800px;
+    }
+    .text-reveal span {
+      display: inline-block;
+    }
+
+    /* ── 7. Base ───────────────────────────────────────── */
+    .hero-section {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4rem;
+      padding: 6rem 2rem 4rem;
+      background: #050510;
+      overflow: hidden;
+      min-height: 88vh;
+    }
+    .stagger-item {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: staggerFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes staggerFadeIn { to { opacity: 1; transform: translateY(0); } }
+    .hero-content {
+      position: relative;
+      z-index: 3;
+      max-width: 620px;
+      text-align: left;
+    }
+    .hero-content h1 { font-size: 3.5rem; font-weight: 800; line-height: 1.15; margin-bottom: 1rem; letter-spacing: -1px; }
+    .hero-highlight {
+      background: linear-gradient(135deg, #fff 0%, #ddd6fe 50%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub-text { font-size: 1.6rem; font-weight: 400; color: rgba(255,255,255,0.4); letter-spacing: -0.5px; }
+    .hero-subtitle {
+      font-size: 1.05rem;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+    .hero-subtitle strong { color: var(--clr-primary-light); }
+    .hero-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+
+    /* ── 8. Aceternity Moving Border Button ───────────── */
+    .aceternity-btn {
+      position: relative;
+      display: inline-flex;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.15s ease;
+      will-change: transform;
+    }
+    .aceternity-btn-border {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      padding: 1px;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      background: conic-gradient(from 0deg, transparent, rgba(124,58,237,0.5), transparent, rgba(124,58,237,0.5), transparent);
+      animation: borderSpin 4s linear infinite;
+    }
+    .aceternity-btn-border-inner { display: none; }
+    .aceternity-btn-content {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 2rem;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border-radius: 11px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      position: relative;
+      z-index: 1;
+      transition: background 0.3s ease;
+    }
+    .aceternity-btn:hover {
+      transform: translateY(-2px);
+    }
+    .aceternity-btn:hover .aceternity-btn-content {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+    .aceternity-btn-secondary .aceternity-btn-content {
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      border: none;
+    }
+    .aceternity-btn-secondary:hover .aceternity-btn-content {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.9);
+    }
+    .aceternity-btn-secondary .aceternity-btn-border {
+      background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.15), transparent, rgba(255,255,255,0.15), transparent);
+    }
+    .cta-arrow { transition: transform 0.3s ease; display: inline-flex; }
+    .aceternity-btn:hover .cta-arrow { transform: translateX(4px); }
+    .aceternity-btn-content kbd {
+      padding: 0.15rem 0.4rem;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-family: inherit;
+    }
+
+    /* ── 9. Stats ─────────────────────────────────────── */
+    .hero-stats {
+      display: flex;
+      gap: 2rem;
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .hero-stat { text-align: left; transition: transform 0.3s ease; }
+    .hero-stat:hover { transform: translateY(-4px); }
+    .stat-number { font-size: 1.6rem; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+    .stat-label { display: block; font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-top: 0.1rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── 10. Aceternity Evervault Card ────────────────── */
+    .evervault-card {
+      position: relative;
+      z-index: 3;
+      width: 380px;
+      flex-shrink: 0;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .evervault-card-border {
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      padding: 1px;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      background: conic-gradient(from 0deg, transparent, rgba(124,58,237,0.2), transparent, rgba(124,58,237,0.2), transparent);
+      animation: borderSpin 6s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes borderSpin { to { transform: rotate(360deg); } }
+    .evervault-card-content {
+      background: rgba(255,255,255,0.02);
+      border-radius: 15px;
+      padding: 1.2rem;
+      position: relative;
+      z-index: 1;
+    }
+    .preview-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--clr-primary-light);
+      margin-bottom: 1rem;
+    }
+    .preview-items { display: flex; flex-direction: column; gap: 0.8rem; }
+    .preview-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.8rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: previewSlideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      position: relative;
+      overflow: hidden;
+    }
+    .preview-item:nth-child(2) { animation-delay: 0.15s; }
+    .preview-item:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes previewSlideIn { from { opacity:0; transform: translateX(-20px) scale(0.95); } to { opacity:1; transform: translateX(0) scale(1); } }
+    .preview-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(124,58,237,0.3); transform: translateX(6px) scale(1.01); box-shadow: 0 4px 20px rgba(124,58,237,0.1); }
+    .preview-item::after { content: ''; position: absolute; left: 0; top: 0; width: 3px; height: 100%; background: linear-gradient(to bottom, #7c3aed, #6d28d9); opacity: 0; transition: opacity 0.3s; }
+    .preview-item:hover::after { opacity: 1; }
+    .preview-img { width: 52px; height: 52px; border-radius: 10px; background: rgba(124,58,237,0.06); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: var(--clr-primary-light); overflow: hidden; flex-shrink: 0; }
+    .preview-img img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-info { flex: 1; min-width: 0; }
+    .preview-name { font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .preview-price { font-size: 0.85rem; font-weight: 700; color: var(--clr-primary-light); }
+    .preview-rating { font-size: 0.7rem; color: var(--clr-accent); }
+    .preview-skeleton { height: 72px; background: rgba(255,255,255,0.03); border-radius: 12px; animation: skeletonPulse 1.8s ease infinite; }
+    @keyframes skeletonPulse { 0%,100% { opacity:0.2; } 50% { opacity:0.5; } }
+
+    .member-hero { min-height: 50vh; padding: 4rem 2rem; }
+
+    @media (max-width: 1024px) {
+      .hero-section { flex-direction: column; text-align: center; gap: 2rem; min-height: auto; padding: 4rem 1.5rem 3rem; }
+      .hero-content { text-align: center; max-width: 100%; }
+      .hero-actions { justify-content: center; }
+      .hero-stats { justify-content: center; }
+      .evervault-card { width: 100%; max-width: 450px; }
+      .hero-content h1 { font-size: 2.5rem; }
+      .hero-sub-text { font-size: 1.2rem; }
+      .tracing-beam { display: none; }
+    }
+    @media (max-width: 480px) {
+      .hero-content h1 { font-size: 1.8rem; }
+      .hero-sub-text { font-size: 1rem; }
+      .hero-stats { gap: 1.2rem; flex-wrap: wrap; }
+      .stat-number { font-size: 1.3rem; }
     }
     
     /* Search Styles - Production Refinement */
@@ -128,15 +542,57 @@
         font-size: 1.1rem;
         z-index: 10;
     }
+    .search-action-btn {
+        position: absolute;
+        right: 0.5rem;
+        background: none;
+        border: none;
+        color: var(--clr-muted);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0.4rem;
+        border-radius: var(--radius-sm);
+        transition: var(--trans-fast);
+        z-index: 10;
+    }
+    .search-action-btn:hover { color: var(--clr-primary-light); background: rgba(124,58,237,0.1); }
+    .search-action-btn.listening { color: #ef4444; animation: pulse 1s infinite; }
+    .search-action-btn#image-search-btn { right: 2.8rem; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
     .nav-actions { display: flex; align-items: center; gap: 1rem; }
 
     .hero-section {
       text-align: center;
       padding: 8rem 1rem;
       background: var(--grad-glow);
+      position: relative;
+      overflow: hidden;
     }
-    .hero-content h1 { font-size: 4rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -1px; }
-    .hero-content p { font-size: 1.4rem; color: var(--clr-muted); margin-bottom: 3rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .hero-badge {
+      display: inline-block;
+      padding: 0.3rem 1rem;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--clr-primary-light);
+      margin-bottom: 1.5rem;
+    }
+    .hero-content h1 { font-size: 4rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -1px; line-height: 1.1; }
+    .hero-content p { font-size: 1.4rem; color: var(--clr-muted); margin-bottom: 3rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+    .btn-secondary {
+      padding: 0.8rem 2rem; background: rgba(255,255,255,0.05); border: 1px solid var(--clr-border);
+      border-radius: var(--radius-sm); font-weight: 600; color: var(--clr-text); transition: var(--trans-slow);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: var(--clr-primary); }
+    .hero-trust-row {
+      display: flex; gap: 2rem; justify-content: center; margin-top: 3rem;
+      flex-wrap: wrap; font-size: 0.85rem; color: var(--clr-muted);
+    }
+    .hero-trust-row span { display: flex; align-items: center; gap: 0.5rem; }
+    .hero-trust-row i { font-size: 1.1rem; color: var(--clr-primary-light); }
     .featured-products { max-width: 1400px; margin: 6rem auto; padding: 0 2rem; }
     .product-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 3rem;
@@ -160,6 +616,129 @@
     .add-to-cart:hover { background: var(--clr-primary-light); transform: scale(1.1); }
   </style>
 
-  <script src="js/catalog.js?v=2"></script>
+  <script>
+    // ── Aceternity Components ──────────────────────────────
+
+    // 1. Spotlight (mouse-following glow)
+    let spotlightTimer;
+    document.addEventListener('mousemove', function(e) {
+      clearTimeout(spotlightTimer);
+      document.querySelectorAll('.spotlight').forEach(s => {
+        s.style.left = e.clientX + 'px';
+        s.style.top = e.clientY + 'px';
+      });
+    });
+
+    // 2. Aceternity Magnetic Buttons
+    document.querySelectorAll('.aceternity-btn').forEach(btn => {
+      btn.addEventListener('mousemove', function(e) {
+        const rect = this.getBoundingClientRect();
+        const x = (e.clientX - rect.left - rect.width / 2) / 15;
+        const y = (e.clientY - rect.top - rect.height / 2) / 15;
+        this.style.transform = `translate(${x}px, ${y}px)`;
+      });
+      btn.addEventListener('mouseleave', function() {
+        this.style.transform = '';
+      });
+    });
+
+    // 3. Aceternity Typewriter
+    (function() {
+      const el = document.getElementById('typewriter-text');
+      if (!el) return;
+      const phrases = ['Before You Even Search for It', 'Powered by AI, Built for You', 'Smart Recommendations Instantly'];
+      let idx = 0, char = 0, del = false;
+      function tick() {
+        const cur = phrases[idx];
+        el.textContent = del ? cur.substring(0, char - 1) : cur.substring(0, char + 1);
+        del ? char-- : char++;
+        if (!del && char === cur.length) { del = true; setTimeout(tick, 2000); return; }
+        if (del && char === 0) { del = false; idx = (idx + 1) % phrases.length; }
+        setTimeout(tick, del ? 30 : 50);
+      }
+      tick();
+    })();
+
+    // 4. Aceternity Evervault Card Tilt
+    document.querySelector('.evervault-card')?.addEventListener('mousemove', function(e) {
+      const r = this.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      this.style.transform = `perspective(1000px) rotateY(${x * 4}deg) rotateX(${-y * 4}deg)`;
+    });
+    document.querySelector('.evervault-card')?.addEventListener('mouseleave', function() {
+      this.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg)';
+    });
+
+    // 5. Tracing Beam fade on scroll
+    window.addEventListener('scroll', function() {
+      const beam = document.querySelector('.tracing-beam');
+      if (!beam) return;
+      const opacity = Math.max(0, 1 - window.scrollY / 400);
+      beam.style.opacity = opacity;
+    });
+
+    // 6. Live Hero Stats ────────────────────────────────────
+    (async function() {
+      try {
+        const res = await fetch('/Ecommerce_site/Backend/products.php', { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) document.getElementById('stat-products').textContent = data.products.length;
+      } catch(e) {}
+      try {
+        await fetch('/Ecommerce_site/Backend/auth_status.php', { credentials: 'include' });
+      } catch(e) {}
+      try {
+        const r = await fetch('/Ecommerce_site/Backend/reviews.php?product_id=1', { credentials: 'include' });
+        const rd = await r.json();
+        if (rd.success) document.getElementById('stat-reviews').textContent = rd.total_reviews;
+      } catch(e) {}
+      document.querySelectorAll('.stat-number').forEach(el => {
+        const target = parseInt(el.textContent);
+        const span = el.querySelector('span');
+        if (!span) return;
+        let current = 0;
+        const step = Math.max(1, Math.floor(target / 30));
+        const interval = setInterval(() => {
+          current += step;
+          if (current >= target) { current = target; clearInterval(interval); }
+          span.textContent = current;
+        }, 40);
+      });
+    })();
+
+    // ── Featured Preview ────────────────────────────────────
+    (async function() {
+      const container = document.getElementById('preview-items');
+      if (!container) return;
+      try {
+        const res = await fetch('/Ecommerce_site/Backend/products.php');
+        const data = await res.json();
+        if (!data.success || !data.products || data.products.length === 0) {
+          container.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.3);font-size:0.85rem;">No products yet</div>';
+          return;
+        }
+        const top = data.products.slice(0, 3);
+        container.innerHTML = top.map(p => {
+          const icon = p.category_name === 'Electronics' ? 'ph-headphones' : 'ph-package';
+          const img = p.main_image ? `<img src="/Ecommerce_site/Backend/${p.main_image.replace(/\\\\/g,'/')}" alt="">` : `<i class="ph ${icon}"></i>`;
+          const rating = parseFloat(p.avg_rating) || 0;
+          const stars = rating > 0 ? '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating)) : '';
+          return '<div class="preview-item" onclick="document.querySelector(\'.featured-products\').scrollIntoView({behavior:\'smooth\'})">' +
+            '<div class="preview-img">' + img + '</div>' +
+            '<div class="preview-info">' +
+            '<div class="preview-name">' + escapeHTML(p.name) + '</div>' +
+            '<div class="preview-price">$' + Number(p.price).toFixed(2) + '</div>' +
+            (stars ? '<div class="preview-rating">' + stars + '</div>' : '') +
+            '</div></div>';
+        }).join('');
+        function escapeHTML(s) { if (!s) return ''; return String(s).replace(/[&<>'"]/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]; }); }
+      } catch(e) {
+        container.innerHTML = '<div style="text-align:center;padding:1rem;color:rgba(255,255,255,0.3);font-size:0.8rem;">Loading products...</div>';
+      }
+    })();
+  </script>
+  <script src="js/animations.js?v=9676"></script>
+  <script src="js/catalog.js?v=9635"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 // ============================================================
 // login.php — Dedicated Backend API for Authentication
 // ============================================================
-$origin = $_SERVER['HTTP_ORIGIN'] ?? 'null';
+$origin = $_SERVER['HTTP_ORIGIN'] ?? (isset($_SERVER['HTTP_HOST']) ? ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']) : 'null');
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: $origin");
 header("Access-Control-Allow-Credentials: true");

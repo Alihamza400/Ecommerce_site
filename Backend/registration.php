@@ -2,7 +2,7 @@
 // ============================================================
 // registration.php — Dedicated Backend API for Registration
 // ============================================================
-$origin = $_SERVER['HTTP_ORIGIN'] ?? 'null';
+$origin = $_SERVER['HTTP_ORIGIN'] ?? (isset($_SERVER['HTTP_HOST']) ? ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']) : 'null');
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: $origin");
 header("Access-Control-Allow-Credentials: true");
@@ -16,7 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/security_functions.php';
-require_once __DIR__ . '/mail_helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -81,33 +80,33 @@ $hashed = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
 $role = 'customer';
 $status = 'active';
 
-$stmt = $con->prepare("INSERT INTO users (uuid, name, email, password_hash, phone, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("sssssss", $uuid, $name, $email, $hashed, $phone, $role, $status);
+try {
+    $stmt = $con->prepare("INSERT INTO users (uuid, name, email, password, password_hash, phone, role, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    if (!$stmt) {
+        throw new RuntimeException("Database prepare failed: " . $con->error);
+    }
 
-if ($stmt->execute()) {
-    // Send Welcome Email
-    $subject = 'Welcome to ShopVerse!';
-    $body = "
-        <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;'>
-            <h2 style='color: #7c3aed;'>✦ Welcome to ShopVerse!</h2>
-            <p>Hi <strong>{$name}</strong>,</p>
-            <p>Thank you for creating an account with ShopVerse. You can now browse products, save your favorite items, and track your orders.</p>
-            <div style='text-align: center; margin: 30px 0;'>
-                <a href='http://localhost/Ecommerce_site/Frontend/index.html' style='background: #7c3aed; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Start Shopping</a>
-            </div>
-            <p style='color: #666; font-size: 0.9rem;'>If you have any questions, feel free to reply to this email.</p>
-            <hr style='border: none; border-top: 1px solid #eee;'>
-            <p style='font-size: 0.8rem; color: #aaa;'>ShopVerse Marketplace — Secure Authentication System</p>
-        </div>
-    ";
-    sendMail($email, $name, $subject, $body);
+    $stmt->bind_param("ssssssss", $uuid, $name, $email, $hashed, $hashed, $phone, $role, $status);
+    if (!$stmt->execute()) {
+        throw new RuntimeException("Database insert failed: " . $stmt->error);
+    }
 
     http_response_code(201);
-    echo json_encode(["success" => true, "message" => "Account created successfully.", "user_id" => $stmt->insert_id]);
-} else {
+    echo json_encode([
+        "success" => true,
+        "message" => "Account created successfully.",
+        "user_id" => $stmt->insert_id
+    ]);
+} catch (Throwable $e) {
     http_response_code(500);
-    error_log("Registration Error: " . $con->error);
-    echo json_encode(["success" => false, "message" => "A server error occurred. Please try again later."]);
+    error_log("Registration Error: " . $e->getMessage());
+    echo json_encode([
+        "success" => false,
+        "message" => "A server error occurred. Please try again later."
+    ]);
+} finally {
+    if (isset($stmt) && $stmt instanceof mysqli_stmt) {
+        $stmt->close();
+    }
 }
-$stmt->close();
 ?>

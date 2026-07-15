@@ -1,20 +1,7 @@
 <?php
-// ============================================================
-// cart.php — Dedicated Backend API for Shopping Cart
-// ============================================================
-$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : 'http://localhost';
-header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: $origin");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/security_functions.php';
+header("Content-Type: application/json");
 session_start();
 
 // Ensure user is logged in
@@ -133,11 +120,18 @@ if ($method === 'POST') {
     }
 }
 
-// ── POST: Add Item to Cart ──────────────────────────────────
+// ── POST: Add Item to Cart (with CSRF + stock safety) ──────
 if ($method === 'POST') {
+    $csrf_token = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    if (!verify_csrf_token($csrf_token)) {
+        http_response_code(403);
+        echo json_encode(["success" => false, "message" => "Invalid CSRF token."]);
+        exit();
+    }
+
     $cart_id = getOrCreateCart($con, $user_id);
     $product_id = intval($data['product_id'] ?? 0);
-    $quantity   = intval($data['quantity'] ?? 1);
+    $quantity   = min(intval($data['quantity'] ?? 1), 99);
     
     if ($product_id <= 0 || $quantity <= 0) {
         http_response_code(400);
@@ -145,63 +139,66 @@ if ($method === 'POST') {
         exit();
     }
     
-    // Get the primary variant and check its stock
-    $stmt = $con->prepare("SELECT id, stock FROM product_variants WHERE product_id = ? LIMIT 1");
-    $stmt->bind_param("i", $product_id);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($res->num_rows === 0) {
-        http_response_code(404);
-        echo json_encode(["success" => false, "message" => "Product variant not found."]);
-        exit();
-    }
-    $variant = $res->fetch_assoc();
-    $variant_id = $variant['id'];
-    $stock_available = intval($variant['stock']);
-    $stmt->close();
-    
-    // Check if item already exists in cart to calculate total requested quantity
-    $stmt = $con->prepare("SELECT id, quantity FROM cart_items WHERE cart_id = ? AND product_variant_id = ?");
-    $stmt->bind_param("ii", $cart_id, $variant_id);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    
-    $existing_qty = 0;
-    $cart_item_id = null;
-    if ($row = $res->fetch_assoc()) {
-        $existing_qty = $row['quantity'];
-        $cart_item_id = $row['id'];
-    }
-    $stmt->close();
+    $con->begin_transaction();
+    try {
+        // Get variant with lock and check product is active
+        $stmt = $con->prepare("SELECT pv.id, pv.stock FROM product_variants pv JOIN products p ON pv.product_id = p.id WHERE pv.product_id = ? AND p.status = 'active' LIMIT 1 FOR UPDATE");
+        $stmt->bind_param("i", $product_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($res->num_rows === 0) {
+            $con->rollback();
+            http_response_code(404);
+            echo json_encode(["success" => false, "message" => "Product not available."]);
+            exit();
+        }
+        $variant = $res->fetch_assoc();
+        $variant_id = $variant['id'];
+        $stock_available = intval($variant['stock']);
+        $stmt->close();
+        
+        // Check if item already exists in cart
+        $stmt = $con->prepare("SELECT id, quantity FROM cart_items WHERE cart_id = ? AND product_variant_id = ? FOR UPDATE");
+        $stmt->bind_param("ii", $cart_id, $variant_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        
+        $existing_qty = 0;
+        $cart_item_id = null;
+        if ($row = $res->fetch_assoc()) {
+            $existing_qty = $row['quantity'];
+            $cart_item_id = $row['id'];
+        }
+        $stmt->close();
 
-    $total_requested = $existing_qty + $quantity;
-
-    if ($total_requested > $stock_available) {
-        http_response_code(400);
-        echo json_encode(["success" => false, "message" => "Only $stock_available units in stock."]);
-        exit();
+        $total_requested = $existing_qty + $quantity;
+        if ($total_requested > $stock_available) {
+            $con->rollback();
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "Only $stock_available units available."]);
+            exit();
+        }
+        
+        if ($cart_item_id) {
+            $upd = $con->prepare("UPDATE cart_items SET quantity = ? WHERE id = ?");
+            $upd->bind_param("ii", $total_requested, $cart_item_id);
+            $upd->execute();
+            $upd->close();
+        } else {
+            $ins = $con->prepare("INSERT INTO cart_items (cart_id, product_variant_id, quantity) VALUES (?, ?, ?)");
+            $ins->bind_param("iii", $cart_id, $variant_id, $quantity);
+            $ins->execute();
+            $ins->close();
+        }
+        
+        $con->commit();
+        echo json_encode(["success" => true, "message" => "Item added to cart."]);
+    } catch (Exception $e) {
+        $con->rollback();
+        http_response_code(500);
+        echo json_encode(["success" => false, "message" => "Failed to add item."]);
+        error_log("Cart Add Error: " . $e->getMessage());
     }
-    
-    if ($cart_item_id) {
-        // Update quantity
-        error_log("POST (Increment): cart_item_id=$cart_item_id, total_requested=$total_requested");
-        $upd = $con->prepare("UPDATE cart_items SET quantity = ? WHERE id = ?");
-        $upd->bind_param("ii", $total_requested, $cart_item_id);
-        $upd->execute();
-        error_log("UPDATE Success: Affected Rows = " . $upd->affected_rows);
-        $upd->close();
-    } else {
-        // Insert new item
-        error_log("POST (Insert): variant_id=$variant_id, quantity=$quantity, cart_id=$cart_id");
-        $ins = $con->prepare("INSERT INTO cart_items (cart_id, product_variant_id, quantity) VALUES (?, ?, ?)");
-        $ins->bind_param("iii", $cart_id, $variant_id, $quantity);
-        $ins->execute();
-        error_log("INSERT Success: ID = " . $ins->insert_id);
-        $ins->close();
-    }
-    
-    http_response_code(200);
-    echo json_encode(["success" => true, "message" => "Item added to cart."]);
     exit();
 }
 

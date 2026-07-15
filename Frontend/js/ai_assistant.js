@@ -1,55 +1,34 @@
-/**
- * AIAssistant.js — Production Level AI Integration
- * Handles: Semantic Search, RAG Chat Assistant, and UI interactions.
- */
-
 class AIAssistant {
     constructor() {
-        this.apiUrl = "http://localhost:8000"; // FastAPI AI Service
+        this.apiUrl = "http://localhost:8000";
         this.chatHistory = [];
         this.isOpen = false;
-        
         this.initUI();
         this.bindEvents();
     }
 
     initUI() {
-        // Create Toggle Button
         const toggleBtn = document.createElement('div');
         toggleBtn.className = 'ai-toggle-btn';
         toggleBtn.id = 'ai-assistant-toggle';
-        toggleBtn.innerHTML = `
-            <div class="pulse"></div>
-            <i class="ph ph-sparkle"></i>
-        `;
+        toggleBtn.innerHTML = `<div class="pulse"></div><i class="ph ph-sparkle"></i>`;
         document.body.appendChild(toggleBtn);
-
-        // Create Chat Container
         const chatContainer = document.createElement('div');
         chatContainer.className = 'ai-chat-container';
         chatContainer.id = 'ai-chat-box';
         chatContainer.innerHTML = `
             <div class="ai-chat-header">
                 <div class="avatar"><i class="ph-fill ph-robot"></i></div>
-                <div class="ai-chat-header-info">
-                    <h3>ShopVerse AI</h3>
-                    <span>Always active & intelligent</span>
-                </div>
+                <div class="ai-chat-header-info"><h3>ShopVerse AI</h3><span>Always active & intelligent</span></div>
             </div>
             <div class="ai-messages" id="ai-messages-list">
-                <div class="ai-message assistant">
-                    Hi! I'm your ShopVerse assistant. Looking for something specific? Try searching by intent like "gadgets for travelers" or "minimalist desk setup".
-                </div>
+                <div class="ai-message assistant">Hi! I'm your ShopVerse assistant. Looking for something specific? Try searching by intent like "gadgets for travelers" or "minimalist desk setup".</div>
             </div>
             <div class="ai-chat-input-area">
                 <input type="text" class="ai-chat-input" id="ai-user-input" placeholder="Ask me anything about our products...">
-                <button class="ai-send-btn" id="ai-send-message">
-                    <i class="ph-bold ph-paper-plane-right"></i>
-                </button>
-            </div>
-        `;
+                <button class="ai-send-btn" id="ai-send-message"><i class="ph-bold ph-paper-plane-right"></i></button>
+            </div>`;
         document.body.appendChild(chatContainer);
-
         this.chatList = document.getElementById('ai-messages-list');
         this.userInput = document.getElementById('ai-user-input');
         this.sendBtn = document.getElementById('ai-send-message');
@@ -58,32 +37,22 @@ class AIAssistant {
     bindEvents() {
         const toggle = document.getElementById('ai-assistant-toggle');
         const chatBox = document.getElementById('ai-chat-box');
-
         toggle.addEventListener('click', () => {
             this.isOpen = !this.isOpen;
             chatBox.classList.toggle('active', this.isOpen);
             if (this.isOpen) this.userInput.focus();
         });
-
         this.sendBtn.addEventListener('click', () => this.handleSendMessage());
         this.userInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.handleSendMessage();
         });
-
-        // Semantic Search Integration
         const searchInput = document.getElementById('ai-search-input');
         const resultsBox = document.getElementById('ai-search-results');
-
         let searchTimeout;
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
             const query = e.target.value.trim();
-            
-            if (query.length < 3) {
-                resultsBox.classList.remove('active');
-                return;
-            }
-
+            if (query.length < 3) { resultsBox.classList.remove('active'); return; }
             searchTimeout = setTimeout(async () => {
                 const results = await this.performSemanticSearch(query);
                 if (results && results.length > 0) {
@@ -92,10 +61,8 @@ class AIAssistant {
                     resultsBox.innerHTML = '<div class="semantic-item">No products found matching your intent.</div>';
                     resultsBox.classList.add('active');
                 }
-            }, 500);
+            }, 300);
         });
-
-        // Close search results when clicking outside
         document.addEventListener('click', (e) => {
             if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
                 resultsBox.classList.remove('active');
@@ -104,46 +71,40 @@ class AIAssistant {
     }
 
     renderSearchResults(results, container) {
-        container.innerHTML = results.map(res => `
-            <div class="semantic-item" onclick="window.location.href='product.html?id=${res.product_id}'">
-                <div class="semantic-info">
-                    <div class="product-title">${res.name}</div>
-                    <div class="product-brand" style="font-size: 0.7rem;">Match Score: ${(res.score * 100).toFixed(0)}%</div>
+        container.innerHTML = results.map(r => {
+            const img = r.image_url ? `<img src="/Ecommerce_site/Backend/${r.image_url}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` : '<i class="ph ph-package" style="font-size:1.5rem;"></i>';
+            return `<div class="semantic-item" onclick="window.location.href='index.html#products-grid'">
+                <div style="display:flex;align-items:center;gap:0.8rem;">
+                    ${img}
+                    <div class="semantic-info">
+                        <div class="product-title">${r.name}</div>
+                        <div style="font-size:0.75rem;color:var(--clr-muted);">
+                            ${r.brand || ''} ${r.price ? ' • $' + Number(r.price).toFixed(2) : ''}
+                            <span style="color:var(--clr-primary-light);"> • ${(r.score * 100).toFixed(0)}% match</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
         container.classList.add('active');
     }
 
     async handleSendMessage() {
         const text = this.userInput.value.trim();
         if (!text) return;
-
-        // 1. Add User Message to UI
         this.addMessage(text, 'user');
         this.userInput.value = '';
-
-        // 2. Show Typing Indicator
         const typingId = this.showTyping();
-
         try {
-            // 3. Call AI Service (RAG Assistant)
             const response = await fetch(`${this.apiUrl}/chat/assistant`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    messages: [
-                        ...this.chatHistory,
-                        { role: 'user', content: text }
-                    ]
+                    messages: [...this.chatHistory, { role: 'user', content: text }]
                 })
             });
-
             const data = await response.json();
-            
-            // Remove typing indicator
             document.getElementById(typingId).remove();
-
             if (data.reply) {
                 this.addMessage(data.reply, 'assistant');
                 this.chatHistory.push({ role: 'user', content: text });
@@ -151,7 +112,6 @@ class AIAssistant {
             } else {
                 this.addMessage("I'm having trouble connecting to my brain right now. Please try again!", 'assistant');
             }
-
         } catch (error) {
             console.error("AI Error:", error);
             document.getElementById(typingId).remove();
@@ -169,29 +129,21 @@ class AIAssistant {
 
     showTyping() {
         const id = 'typing-' + Date.now();
-        const typingDiv = document.createElement('div');
-        typingDiv.id = id;
-        typingDiv.className = 'ai-message assistant';
-        typingDiv.innerHTML = `
-            <div class="typing-indicator">
-                <span></span><span></span><span></span>
-            </div>
-        `;
-        this.chatList.appendChild(typingDiv);
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = 'ai-message assistant';
+        div.innerHTML = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
+        this.chatList.appendChild(div);
         this.chatList.scrollTop = this.chatList.scrollHeight;
         return id;
     }
 
-    /**
-     * Enhanced Semantic Search Logic
-     * Intercepts standard searches to provide AI-powered results
-     */
     async performSemanticSearch(query) {
         try {
             const response = await fetch(`${this.apiUrl}/search/semantic`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: query, limit: 10 })
+                body: JSON.stringify({ query, limit: 10 })
             });
             return await response.json();
         } catch (error) {
@@ -201,7 +153,71 @@ class AIAssistant {
     }
 }
 
-// Initialize on Load
 document.addEventListener('DOMContentLoaded', () => {
     window.shopVerseAI = new AIAssistant();
 });
+
+window.startVoiceSearch = function() {
+    const btn = document.getElementById('voice-search-btn');
+    const input = document.getElementById('ai-search-input');
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('Voice search is not supported in your browser. Try Chrome or Edge.');
+        return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    btn.classList.add('listening');
+    btn.innerHTML = '<i class="ph ph-microphone"></i>';
+    recognition.start();
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        input.value = transcript;
+        btn.classList.remove('listening');
+        btn.innerHTML = '<i class="ph ph-microphone"></i>';
+        input.dispatchEvent(new Event('input'));
+    };
+    recognition.onerror = function() {
+        btn.classList.remove('listening');
+        btn.innerHTML = '<i class="ph ph-microphone"></i>';
+    };
+    recognition.onend = function() {
+        btn.classList.remove('listening');
+        btn.innerHTML = '<i class="ph ph-microphone"></i>';
+    };
+};
+
+window.handleImageSearch = async function(fileInput) {
+    if (!fileInput.files || !fileInput.files[0]) return;
+    const btn = document.getElementById('image-search-btn');
+    const resultsBox = document.getElementById('ai-search-results');
+    btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i>';
+    try {
+        const reader = new FileReader();
+        reader.readAsDataURL(fileInput.files[0]);
+        reader.onload = async function() {
+            const base64 = reader.result;
+            const response = await fetch('http://localhost:8000/search/image-search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image_data: base64, limit: 5 })
+            });
+            const results = await response.json();
+            btn.innerHTML = '<i class="ph ph-camera"></i>';
+            if (results && results.length > 0) {
+                const container = document.getElementById('ai-search-results');
+                container.innerHTML = '<div class="semantic-item" style="font-size:0.8rem;color:var(--clr-primary-light);font-weight:600;border-bottom:1px solid var(--clr-border);">Image Search Results</div>';
+                window.shopVerseAI.renderSearchResults(results, container);
+            } else {
+                resultsBox.innerHTML = '<div class="semantic-item">No matching products found.</div>';
+                resultsBox.classList.add('active');
+            }
+        };
+    } catch(e) {
+        btn.innerHTML = '<i class="ph ph-camera"></i>';
+        alert('Image search failed. Make sure the AI service is running.');
+    }
+    fileInput.value = '';
+};

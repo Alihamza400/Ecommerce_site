@@ -4,11 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Order History — ShopVerse</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css?v=9291" />
   <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
   <script src="js/session_check.js"></script>
 </head>
-<body>
+<body class="entrance-fade">
 
   <!-- Navigation -->
   <header class="site-header">
@@ -35,7 +36,7 @@
         <i class="ph ph-warning-circle"></i><span id="orders-alert-msg"></span>
     </div>
 
-    <div id="orders-list">
+    <div id="orders-list" class="reveal delay-2" class="reveal delay-2">
         <div class="loading-state">Fetching your order history...</div>
     </div>
 
@@ -104,6 +105,9 @@
                             </div>
                             <div class="order-price">
                                 $${Number(o.total_amount).toFixed(2)}
+                                <a href="/Ecommerce_site/Backend/invoice.php?uuid=${o.uuid}" target="_blank" class="btn-ghost" style="font-size:0.75rem;padding:0.3rem 0.6rem;margin-top:0.5rem;display:inline-flex;align-items:center;gap:0.3rem;">
+                                    <i class="ph ph-file-pdf"></i> Invoice
+                                </a>
                             </div>
                         </div>
                     `;
@@ -115,6 +119,7 @@
         }
     }
   </script>
+  <script src="js/animations.js?v=9676"></script>
 </body>
 </html>
 

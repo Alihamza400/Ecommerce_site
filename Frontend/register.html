@@ -4,16 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Create Account — ShopVerse</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css?v=9291" />
   <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
   <script src="js/session_check.js"></script>
 </head>
-<body>
+<body class="entrance-fade">
 <main class="auth-page" id="register-page">
 
   <aside class="auth-panel">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
+    <div class="orb orb-1 float-slow"></div>
+    <div class="orb orb-2 float-medium"></div>
     <div class="auth-panel-logo">✦ ShopVerse</div>
     <h1 class="auth-panel-tagline">Shop <span>Smarter</span>,<br>Live Better.</h1>
     <ul class="auth-features">
@@ -23,7 +24,7 @@
   </aside>
 
   <section class="auth-form-side">
-    <div class="auth-card">
+    <div class="auth-card reveal">
       <div class="auth-card-header">
         <h2 class="auth-card-title">Create your account</h2>
         <p class="auth-card-subtitle">Already have an account? <a href="login.html">Sign in here</a></p>
@@ -33,7 +34,7 @@
         <i class="ph ph-warning-circle"></i><span id="reg-alert-msg"></span>
       </div>
 
-      <form id="register-form" novalidate>
+      <form id="register-form" class="reveal delay-2" class="reveal delay-2" novalidate>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="reg-name">Full Name</label>
@@ -106,6 +107,7 @@
 
 </main>
 <script src="js/auth.js"></script>
+  <script src="js/animations.js?v=9676"></script>
 </body>
 </html>
 

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wishlist | ShopVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css?v=9291">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
+    <script src="js/session_check.js"></script>
+</head>
+<body class="entrance-fade">
+    <header class="site-header" style="border-bottom:1px solid var(--clr-border);">
+        <div class="nav-container" style="max-width:1400px;margin:0 auto;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;">
+            <a href="index.html" class="logo" style="font-size:1.5rem;font-weight:800;background:var(--grad-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">✦ ShopVerse</a>
+            <nav style="display:flex;gap:1rem;align-items:center;">
+                <a href="index.html" style="color:var(--clr-text);">Store</a>
+                <a href="cart.html" style="color:var(--clr-text);">Cart</a>
+                <div id="auth-actions"><a href="login.html" class="btn-ghost">Sign In</a></div>
+            </nav>
+        </div>
+    </header>
+    <main style="max-width:1400px;margin:3rem auto;padding:0 2rem;">
+        <h1 style="font-size:2rem;margin-bottom:2rem;">❤️ My Wishlist</h1>
+        <div id="wishlist-container" class="reveal delay-2" class="reveal">
+            <div style="text-align:center;padding:4rem;"><div class="btn-spinner" style="display:block;"></div></div>
+        </div>
+    </main>
+    <script>
+        const BASE_URL = '/Ecommerce_site/Backend';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const container = document.getElementById('wishlist-container');
+            try {
+                const res = await fetch(`${BASE_URL}/wishlist.php`, { credentials: 'include' });
+                if (res.status === 401) { window.location.href = 'login.html'; return; }
+                const data = await res.json();
+                if (!data.success || data.items.length === 0) {
+                    container.innerHTML = `<div style="text-align:center;padding:4rem;color:var(--clr-muted);">
+                        <i class="ph ph-heart" style="font-size:4rem;opacity:0.3;"></i>
+                        <h3 style="margin-top:1rem;">Your wishlist is empty</h3>
+                        <p style="margin-bottom:1.5rem;">Save items you love to your wishlist.</p>
+                        <a href="index.html" class="btn-primary">Browse Products</a>
+                    </div>`;
+                    return;
+                }
+                container.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:2rem;">`
+                    + data.items.map(item => `
+                        <div style="background:var(--clr-surface-2);border:1px solid var(--clr-border);border-radius:var(--radius-lg);overflow:hidden;">
+                            <div style="height:200px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;font-size:4rem;color:var(--clr-muted);overflow:hidden;">
+                                ${item.main_image ? `<img src="/Ecommerce_site/Backend/${item.main_image}" style="width:100%;height:100%;object-fit:cover;">` : '<i class="ph ph-package"></i>'}
+                            </div>
+                            <div style="padding:1.5rem;">
+                                <div style="font-size:0.8rem;color:var(--clr-accent);font-weight:700;text-transform:uppercase;">${item.brand || 'Product'}</div>
+                                <h3 style="margin:0.5rem 0;font-size:1.1rem;">${item.name}</h3>
+                                <div style="font-size:1.3rem;font-weight:900;">$${Number(item.price).toFixed(2)}</div>
+                                <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+                                    <button class="btn-primary" style="flex:1;padding:0.6rem;" onclick="addToCart(${item.product_id})">Add to Cart</button>
+                                    <button style="padding:0.6rem;background:rgba(239,68,68,0.1);border:1px solid #ef4444;border-radius:var(--radius-sm);color:#ef4444;cursor:pointer;" onclick="removeFromWishlist(${item.product_id})">✕</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') + `</div>`;
+            } catch(e) { container.innerHTML = '<div style="text-align:center;padding:4rem;color:var(--clr-error);">Failed to load wishlist.</div>'; }
+        });
+
+        async function addToCart(id) {
+            const res = await fetch(`${BASE_URL}/cart.php`, { method:'POST', body: new FormData(), credentials:'include' });
+            const fd = new FormData(); fd.append('product_id', id); fd.append('quantity', 1);
+            const r2 = await fetch(`${BASE_URL}/cart.php`, { method:'POST', body: fd, credentials:'include' });
+            if (r2.status === 401) { window.location.href='login.html'; return; }
+            const d = await r2.json();
+            alert(d.success ? 'Added to cart!' : d.message);
+        }
+
+        async function removeFromWishlist(productId) {
+            await fetch(`${BASE_URL}/wishlist.php`, { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({product_id:productId}), credentials:'include' });
+            location.reload();
+        }
+    </script>
+  <script src="js/animations.js?v=9676"></script>
+</body>
+</html>

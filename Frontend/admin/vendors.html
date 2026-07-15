@@ -7,7 +7,8 @@
     
     <!-- Design Foundation -->
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/admin.css"
+  <link rel="stylesheet" href="../css/animations.css?v=2" />>
     
     <!-- Icons & Fonts -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -20,22 +21,22 @@
             <div class="sidebar-logo">ShopVerse Elite</div>
             
             <nav class="nav-list">
-                <a href="dashboard.html" class="nav-link">
+                <a href="../admin/dashboard.html" class="nav-link">
                     <i class="ph ph-squares-four"></i> Dashboard
                 </a>
-                <a href="orders.html" class="nav-link">
+                <a href="../admin/orders.html" class="nav-link">
                     <i class="ph ph-shopping-cart"></i> Orders
                 </a>
-                <a href="products.html" class="nav-link">
+                <a href="../admin/products.html" class="nav-link">
                     <i class="ph ph-package"></i> Products
                 </a>
-                <a href="payments.html" class="nav-link">
+                <a href="../admin/payments.html" class="nav-link">
                     <i class="ph ph-credit-card"></i> Payments
                 </a>
                 <a href="vendors.html" class="nav-link active">
                     <i class="ph ph-storefront"></i> Vendors
                 </a>
-                <a href="users.html" class="nav-link">
+                <a href="../admin/users.html" class="nav-link">
                     <i class="ph ph-users"></i> Customers
                 </a>
             </nav>
@@ -72,6 +73,15 @@
                     <div>
                         <span class="stat-value" id="stat-pending-vendors">0</span>
                         <span class="stat-label">New Applications</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(239,68,68,0.1); color:var(--clr-error);">
+                        <i class="ph ph-prohibit"></i>
+                    </div>
+                    <div>
+                        <span class="stat-value" id="stat-suspended-vendors">0</span>
+                        <span class="stat-label">Suspended</span>
                     </div>
                 </div>
             </div>
@@ -117,7 +127,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="../js/session_check.js"></script>
-    <script src="../js/admin_vendors.js"></script>
+    <script src="../js/session_check.js?v=2"></script>
+    <script src="../js/admin_vendors.js?v=2"></script>
 </body>
 </html>

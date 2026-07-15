@@ -15,26 +15,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/cache.php';
 
-$countResult = $con->query("SELECT COUNT(*) AS total FROM categories")->fetch_assoc();
-if ((int)$countResult['total'] === 0) {
-    $defaults = ['Electronics', 'Fashion', 'Home & Garden'];
-    $insert = $con->prepare("INSERT INTO categories (name) VALUES (?)");
-    foreach ($defaults as $name) {
-        $insert->bind_param("s", $name);
-        $insert->execute();
+$cache = new AppCache();
+
+$categories = $cache->remember('categories.list', 300, function() use ($con) {
+    // Ensure categories exist
+    $countResult = $con->query("SELECT COUNT(*) AS total FROM categories")->fetch_assoc();
+    if ((int)$countResult['total'] === 0) {
+        $defaults = [
+            ['Electronics', 'electronics'],
+            ['Fashion', 'fashion'],
+            ['Home & Garden', 'home-garden']
+        ];
+        $insert = $con->prepare("INSERT INTO categories (uuid, name, slug) VALUES (?, ?, ?)");
+        foreach ($defaults as $item) {
+            $uuid = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000,
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff));
+            $insert->bind_param("sss", $uuid, $item[0], $item[1]);
+            $insert->execute();
+        }
+        $insert->close();
     }
-    $insert->close();
-}
 
-$stmt = $con->prepare("SELECT id, name FROM categories ORDER BY id ASC");
-$stmt->execute();
-$result = $stmt->get_result();
-$categories = [];
-while ($row = $result->fetch_assoc()) {
-    $categories[] = $row;
-}
-$stmt->close();
+    $stmt = $con->prepare("SELECT id, name FROM categories ORDER BY id ASC");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $cats = [];
+    while ($row = $result->fetch_assoc()) $cats[] = $row;
+    $stmt->close();
+    return $cats;
+});
 
 echo json_encode(["success" => true, "categories" => $categories]);
-exit();

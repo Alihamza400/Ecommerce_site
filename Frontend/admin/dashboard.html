@@ -3,22 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Vendor Moderation</title>
-    
-    <!-- Design Foundation -->
+    <title>Dashboard | ShopVerse Elite</title>
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/admin.css">
-    
-    <!-- Icons & Fonts -->
+    <link rel="stylesheet" href="../css/admin.css"
+  <link rel="stylesheet" href="../css/animations.css?v=2" />>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
 
     <div class="admin-container" id="admin-main">
-        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo">ShopVerse Elite</div>
-            
             <nav class="nav-list">
                 <a href="dashboard.html" class="nav-link active">
                     <i class="ph ph-squares-four"></i> Dashboard
@@ -39,7 +34,6 @@
                     <i class="ph ph-users"></i> Customers
                 </a>
             </nav>
-
             <div style="margin-top: auto;">
                 <a href="../index.html" class="nav-link">
                     <i class="ph ph-arrow-left"></i> Back to Store
@@ -47,168 +41,127 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
             <div class="header-flex">
                 <div>
-                    <h1 class="page-title">Platform Moderation</h1>
-                    <p style="color: var(--clr-muted);">Review and manage vendor applications.</p>
+                    <h1 class="page-title">Dashboard</h1>
+                    <p style="color: var(--clr-muted);">Platform overview at a glance.</p>
+                </div>
+                <div style="display:flex; gap:0.75rem;">
+                    <a href="vendors.html" class="btn-primary-sm" btn-ripple style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.6rem 1.2rem;">
+                        <i class="ph ph-storefront"></i> Manage Vendors
+                    </a>
+                    <a href="orders.html" class="btn-primary-sm" btn-ripple style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.6rem 1.2rem; background:var(--clr-surface-2); color:var(--clr-text);">
+                        <i class="ph ph-shopping-cart"></i> Orders
+                    </a>
                 </div>
             </div>
 
-            <!-- Stats Row -->
-            <div class="stats-row">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="ph ph-user-plus"></i></div>
-                    <div>
-                        <span class="stat-value" id="stat-pending-apps">0</span>
-                        <span class="stat-label">Vendor Apps</span>
-                    </div>
-                </div>
-                
-                <!-- NEW: Quick Fulfillment Card -->
-                <div class="stat-card" style="cursor:pointer; border-color:var(--clr-primary-light); background:rgba(124,58,237,0.05);" onclick="window.location.href='orders.html'">
-                    <div class="stat-icon" style="background:var(--grad-primary); color:#fff;">
-                        <i class="ph ph-truck"></i>
-                    </div>
-                    <div>
-                        <span class="stat-value">Manage</span>
-                        <span class="stat-label">Order Fulfillment</span>
-                    </div>
-                    <i class="ph ph-arrow-right" style="margin-left:auto; color:var(--clr-primary-light);"></i>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon" style="background:rgba(16,185,129,0.1); color:var(--clr-success);">
-                        <i class="ph ph-storefront"></i>
-                    </div>
-                    <div>
-                        <span class="stat-value">Active</span>
-                        <span class="stat-label">Marketplace</span>
-                    </div>
-                </div>
+            <div class="stats-row" id="stats-row" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="stat-card" reveal-scale><div class="stat-icon"><i class="ph ph-storefront"></i></div><div><span class="stat-value" id="stat-active-vendors">-</span><span class="stat-label">Active Vendors</span></div></div>
+                <div class="stat-card" reveal-scale><div class="stat-icon" style="background:rgba(245,158,11,0.1); color:var(--clr-warning);"><i class="ph ph-user-plus"></i></div><div><span class="stat-value" id="stat-pending-vendors">-</span><span class="stat-label">Pending</span></div></div>
+                <div class="stat-card" reveal-scale><div class="stat-icon" style="background:rgba(239,68,68,0.1); color:var(--clr-error);"><i class="ph ph-prohibit"></i></div><div><span class="stat-value" id="stat-suspended-vendors">-</span><span class="stat-label">Suspended</span></div></div>
+                <div class="stat-card" reveal-scale><div class="stat-icon" style="background:rgba(16,185,129,0.1); color:var(--clr-success);"><i class="ph ph-package"></i></div><div><span class="stat-value" id="stat-products">-</span><span class="stat-label">Active Products</span></div></div>
+                <div class="stat-card" reveal-scale><div class="stat-icon" style="background:rgba(59,130,246,0.1); color:var(--clr-primary);"><i class="ph ph-shopping-cart"></i></div><div><span class="stat-value" id="stat-orders">-</span><span class="stat-label">Total Orders</span></div></div>
+                <div class="stat-card" reveal-scale><div class="stat-icon" style="background:rgba(245,158,11,0.1); color:var(--clr-warning);"><i class="ph ph-currency-dollar"></i></div><div><span class="stat-value" id="stat-revenue">-</span><span class="stat-label">Revenue</span></div></div>
+                <div class="stat-card" reveal-scale><div class="stat-icon" style="background:rgba(139,92,246,0.1); color:#8b5cf6;"><i class="ph ph-users"></i></div><div><span class="stat-value" id="stat-users">-</span><span class="stat-label">Users</span></div></div>
+                <div class="stat-card" reveal-scale><div class="stat-icon" style="background:rgba(16,185,129,0.1); color:var(--clr-success);"><i class="ph ph-credit-card"></i></div><div><span class="stat-value" id="stat-payments">-</span><span class="stat-label">Payments</span></div></div>
             </div>
 
-            <!-- Vendor Application Table -->
-            <div class="order-table-container">
-                <div class="table-header">
-                    <h2 style="font-size: 1.1rem;">Pending Vendor Applications</h2>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem; margin-top:2rem;">
+                <div class="order-table-container">
+                    <div class="table-header"><h2 style="font-size:1rem;">Recent Orders</h2><a href="orders.html" style="color:var(--clr-primary-light); font-size:0.85rem;">View All</a></div>
+                    <div class="table-wrapper" id="recent-orders"><div style="text-align:center;padding:3rem;"><div class="btn-spinner" style="display:block;"></div></div></div>
                 </div>
-                
-                <div class="table-wrapper" id="vendor-list">
-                    <div style="text-align:center; padding: 4rem;">
-                        <div class="btn-spinner" style="display:block; border-top-color:var(--clr-primary);"></div>
-                    </div>
+                <div class="order-table-container">
+                    <div class="table-header"><h2 style="font-size:1rem;">Recent Vendors</h2><a href="vendors.html" style="color:var(--clr-primary-light); font-size:0.85rem;">Manage</a></div>
+                    <div class="table-wrapper" id="recent-vendors"><div style="text-align:center;padding:3rem;"><div class="btn-spinner" style="display:block;"></div></div></div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Alert / Toast -->
-    <div id="admin-alert" class="alert" style="position:fixed; bottom:2rem; right:2rem; z-index:100; margin-bottom:0; width:320px;">
+    <div id="admin-alert" class="alert" style="position:fixed; bottom:2rem; right:2rem; z-index:100; width:320px;">
         <span id="admin-alert-msg"></span>
     </div>
 
-    <!-- Scripts -->
     <script src="../js/session_check.js"></script>
     <script>
-        const BASE_URL = (() => {
-          const proto = window.location.protocol;
-          const host  = window.location.hostname || 'localhost';
-          const port  = window.location.port ? `:${window.location.port}` : '';
-          if (proto === 'file:') return 'http://localhost/Ecommerce_site/Backend';
-          return `${proto}//${host}${port}/Ecommerce_site/Backend`;
-        })();
+        const BASE_URL = '/Ecommerce_site/Backend';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchPendingVendors();
-        });
+        document.addEventListener('DOMContentLoaded', () => { loadDashboard(); });
 
         function showAlert(text, type='error') {
             const box = document.getElementById('admin-alert');
             const msg = document.getElementById('admin-alert-msg');
+            if (!box || !msg) return alert(text);
             box.className = `alert alert-${type} show`;
             msg.textContent = text;
             setTimeout(() => box.classList.remove('show'), 5000);
         }
 
-        async function fetchPendingVendors() {
-            const list = document.getElementById('vendor-list');
+        async function loadDashboard() {
             try {
-                const res = await fetch(`${BASE_URL}/admin/vendors.php?status=inactive`, { credentials: 'include' });
+                const res = await fetch(`${BASE_URL}/admin/dashboard.php`, { credentials: 'include' });
                 const data = await res.json();
-                
-                if (data.success) {
-                    document.getElementById('stat-pending-apps').textContent = data.vendors.length;
-                    
-                    if (data.vendors.length === 0) {
-                        list.innerHTML = `<div class="empty-state">
-                            <div class="empty-icon"><i class="ph ph-check-circle"></i></div>
-                            <h3>No pending applications</h3>
-                            <p style="color:var(--clr-muted);">All vendors are currently processed.</p>
-                        </div>`;
-                        return;
-                    }
-                    
-                    let html = `
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Store Name</th>
-                                    <th>Applicant</th>
-                                    <th>Email</th>
-                                    <th style="text-align:right;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-                    
-                    data.vendors.forEach(v => {
-                        html += `
-                            <tr>
-                                <td style="font-weight:600; color:var(--clr-primary-light);">${escapeHTML(v.store_name)}</td>
-                                <td>${escapeHTML(v.name)}</td>
-                                <td style="color:var(--clr-muted);">${escapeHTML(v.email)}</td>
-                                <td style="text-align:right;">
-                                    <button class="btn-approve" style="padding: 0.5rem 1rem; background:var(--clr-success); color:#fff; border:none; border-radius:var(--radius-sm); cursor:pointer;" onclick="processVendor(${v.vendor_id}, 'approve')">Approve</button>
-                                    <button class="btn-reject" style="padding: 0.5rem 1rem; background:rgba(239,68,68,0.1); color:var(--clr-error); border:1px solid var(--clr-error); border-radius:var(--radius-sm); cursor:pointer; margin-left:0.5rem;" onclick="processVendor(${v.vendor_id}, 'reject')">Deny</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    
-                    html += `</tbody></table>`;
-                    list.innerHTML = html;
-                }
-            } catch(err) {
-                list.innerHTML = '<div class="empty-state">Network error.</div>';
+                if (!data.success) return;
+
+                const s = data.stats;
+                document.getElementById('stat-active-vendors').textContent = s.active_vendors;
+                document.getElementById('stat-pending-vendors').textContent = s.pending_vendors;
+                document.getElementById('stat-suspended-vendors').textContent = s.suspended_vendors;
+                document.getElementById('stat-products').textContent = s.active_products;
+                document.getElementById('stat-orders').textContent = s.total_orders;
+                document.getElementById('stat-revenue').textContent = '$' + Number(s.total_revenue).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+                document.getElementById('stat-users').textContent = s.total_users;
+                document.getElementById('stat-payments').textContent = s.total_payments;
+
+                renderRecentOrders(data.recent_orders);
+                renderRecentVendors(data.recent_vendors);
+            } catch(e) {
+                showAlert('Failed to load dashboard data.');
             }
         }
 
-        async function processVendor(vendorId, actionMsg) {
-            if(!confirm(`Are you sure you want to ${actionMsg} this store?`)) return;
-            try {
-                const res = await fetch(`${BASE_URL}/admin/vendors.php`, {
-                    method: 'PUT',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ vendor_id: vendorId, action: actionMsg }),
-                    credentials: 'include'
-                });
-                const data = await res.json();
-                if(data.success) {
-                    showAlert(data.message, 'success');
-                    fetchPendingVendors();
-                } else {
-                    showAlert(data.message);
-                }
-            } catch(e) { showAlert("Network error executing command."); }
+        function renderRecentOrders(orders) {
+            const el = document.getElementById('recent-orders');
+            if (!orders || orders.length === 0) {
+                el.innerHTML = '<div class="empty-state"><p>No orders yet.</p></div>';
+                return;
+            }
+            el.innerHTML = '<table><thead><tr><th>Order</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead><tbody>'
+                + orders.map(o => {
+                    const badge = o.status === 'delivered' ? 'badge-delivered' : (o.status === 'cancelled' ? 'badge-cancelled' : 'badge-pending');
+                    return `<tr>
+                        <td style="font-weight:600;">#${o.uuid?.substring(0,8) || o.id}</td>
+                        <td style="color:var(--clr-muted);">${escapeHTML(o.customer_name)}</td>
+                        <td>$${Number(o.total_amount).toFixed(2)}</td>
+                        <td><span class="badge ${badge}">${o.status}</span></td>
+                    </tr>`;
+                }).join('') + '</tbody></table>';
+        }
+
+        function renderRecentVendors(vendors) {
+            const el = document.getElementById('recent-vendors');
+            if (!vendors || vendors.length === 0) {
+                el.innerHTML = '<div class="empty-state"><p>No vendors yet.</p></div>';
+                return;
+            }
+            el.innerHTML = '<table><thead><tr><th>Store</th><th>Owner</th><th>Status</th></tr></thead><tbody>'
+                + vendors.map(v => {
+                    const cls = v.vendor_status === 'active' ? 'badge-delivered' : (v.vendor_status === 'suspended' ? 'badge-cancelled' : 'badge-pending');
+                    return `<tr>
+                        <td style="font-weight:600; color:var(--clr-primary-light);">${escapeHTML(v.store_name)}</td>
+                        <td style="color:var(--clr-muted);">${escapeHTML(v.name)}</td>
+                        <td><span class="badge ${cls}">${v.vendor_status}</span></td>
+                    </tr>`;
+                }).join('') + '</tbody></table>';
         }
 
         function escapeHTML(str) {
             if (!str) return '';
-            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag]));
+            return str.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t]));
         }
     </script>
 </body>
 </html>
-

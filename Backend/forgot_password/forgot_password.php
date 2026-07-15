@@ -2,19 +2,41 @@
 // ============================================================
 // forgot_password.php — Secure Token Generation & Real Email
 // ============================================================
+$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : 'http://localhost';
 header("Content-Type: application/json");
-ob_start(); // Buffer output to prevent pollution
+header("Access-Control-Allow-Origin: $origin");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+ob_start();
 
-// Import PHPMailer classes
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Include Composer's autoloader and Configs
-require_once '../config.php';
-require_once '../mail_helper.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../security_functions.php';
+require_once __DIR__ . '/../mail_helper.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(["success" => false, "message" => "Method not allowed."]);
+    exit();
+}
 
 $data = json_decode(file_get_contents("php://input"), true);
 $email = trim($data['email'] ?? '');
+$csrf_token = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+
+if (!verify_csrf_token($csrf_token)) {
+    http_response_code(403);
+    echo json_encode(["success" => false, "message" => "Invalid or missing CSRF token."]);
+    exit();
+}
 
 if (empty($email)) {
     echo json_encode(["success" => false, "message" => "Please enter your email."]);
@@ -40,7 +62,7 @@ $token = bin2hex(random_bytes(32));
 $expires_at = date("Y-m-d H:i:s", strtotime("+1 hour"));
 
 // 3. Store in DB
-$con->query("DELETE FROM password_resets WHERE email = '$email'");
+$stmt = $con->prepare("DELETE FROM password_resets WHERE email = ?"); $stmt->bind_param("s", $email); $stmt->execute(); $stmt->close();
 $ins = $con->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)");
 $ins->bind_param("sss", $email, $token, $expires_at);
 

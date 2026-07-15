@@ -8,7 +8,7 @@ import dotenv  from 'dotenv';
 import paymentRoutes from './api/routes.js';
 import logger from './utils/logger.js';
 
-dotenv.config();
+dotenv.config({ path: '../.env' });
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -29,7 +29,12 @@ app.get('/health', (_req, res) => {
     res.json({
         status: 'healthy',
         system: 'Payment Orchestration System v1.0',
-        gateways: ['Stripe', 'JazzCash', 'EasyPaisa'],
+        gateways: ['Stripe', 'JazzCash', 'EasyPaisa', 'Crypto'],
+        crypto: {
+            wallet: process.env.CRYPTO_WALLET || 'not configured',
+            network: process.env.CRYPTO_NETWORK || 'BSC',
+            currency: process.env.CRYPTO_CURRENCY || 'USDT'
+        },
         uptime: process.uptime()
     });
 });

@@ -4,16 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sign In — ShopVerse</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css?v=9291" />
   <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
   <script src="js/session_check.js"></script>
 </head>
-<body>
+<body class="entrance-fade">
 <main class="auth-page" id="login-page">
 
   <aside class="auth-panel">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
+    <div class="orb orb-1 float-slow"></div>
+    <div class="orb orb-2 float-medium"></div>
     <div class="auth-panel-logo">✦ ShopVerse</div>
     <h1 class="auth-panel-tagline">Welcome<br><span>Back!</span></h1>
     <p class="auth-panel-sub">Your orders, deals, and wishlist are waiting for you. Sign in to continue.</p>
@@ -24,7 +25,7 @@
   </aside>
 
   <section class="auth-form-side">
-    <div class="auth-card">
+    <div class="auth-card reveal">
       <div class="auth-card-header">
         <h2 class="auth-card-title">Sign in to your account</h2>
         <p class="auth-card-subtitle">Don't have an account? <a href="register.html">Create one free</a></p>
@@ -34,7 +35,7 @@
         <i class="ph ph-warning-circle"></i><span id="login-alert-msg"></span>
       </div>
 
-      <form id="login-form" novalidate>
+      <form id="login-form" class="reveal delay-2" novalidate>
         <div class="form-group">
           <label class="form-label" for="login-email">Email Address</label>
           <div class="input-wrapper">
@@ -58,7 +59,7 @@
         </div>
 
 
-        <button type="submit" class="btn-primary" id="login-submit">
+        <button type="submit" class="btn-primary" id="login-submit" class="btn-ripple">
           <span class="btn-text">Sign In</span><span class="btn-spinner"></span>
         </button>
 
@@ -74,6 +75,7 @@
 
 </main>
 <script src="js/auth.js"></script>
+  <script src="js/animations.js?v=9676"></script>
 </body>
 </html>
 

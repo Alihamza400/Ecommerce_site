@@ -1,15 +1,22 @@
 <?php
 /**
- * AI Synchronization Script (Production Level)
- * 
- * Fetches all products from MySQL and indexes them into the Qdrant Vector DB 
- * via the Python AI Microservice.
+ * AI Synchronization Script — CLI only (secured against web access)
+ * Fetches all active products and indexes them into Qdrant.
  */
+
+// Block web access
+if (php_sapi_name() !== 'cli') {
+    require_once 'config.php';
+    session_start();
+    if (!isset($_SESSION['SESS-ID']) || $_SESSION['SESS-ROLE'] !== 'admin') {
+        http_response_code(403);
+        die(json_encode(["success" => false, "message" => "Admin access required."]));
+    }
+}
 
 require_once 'config.php';
 require_once 'ai_helper.php';
 
-// Set higher execution time for large catalogs
 set_time_limit(300);
 
 $ai = new AIServiceHelper();
@@ -24,9 +31,10 @@ $query = "SELECT
           LEFT JOIN product_variants v ON p.id = v.product_id
           LEFT JOIN product_categories pc ON p.id = pc.product_id
           LEFT JOIN categories c ON pc.category_id = c.id
+          WHERE p.status = 'active'
           GROUP BY p.id";
-$result = $con->query($query);
 
+$result = $con->query($query);
 if (!$result) {
     die("Database error: " . $con->error);
 }

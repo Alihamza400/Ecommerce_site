@@ -4,11 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Profile — ShopVerse</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css?v=9291" />
   <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
   <script src="js/session_check.js"></script>
 </head>
-<body>
+<body class="entrance-fade">
 
   <!-- Navigation -->
   <header class="site-header">
@@ -93,7 +94,7 @@
             </form>
 
             <!-- Addresses List -->
-            <div id="address-list" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
+            <div id="address-list" class="reveal" class="reveal delay-2" class="reveal delay-2" style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
                 <div class="loading-state">Loading addresses...</div>
             </div>
 
@@ -128,6 +129,7 @@
   </style>
 
   <script src="js/profile.js"></script>
+  <script src="js/animations.js?v=9676"></script>
 </body>
 </html>
 

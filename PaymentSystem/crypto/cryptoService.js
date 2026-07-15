@@ -1,50 +1,80 @@
 import logger from '../utils/logger.js';
+import { BlockchainService } from './BlockchainService.js';
+
+const RECEIVE_WALLET = process.env.CRYPTO_WALLET || '0x4A35F6CCD8030F23B4212623bA3F8888B177Ff54';
+const USDT_DECIMALS = 18;
 
 export class CryptoService {
     /**
-     * Abstracted logic for generating a crypto payment address/invoice.
-     * In production, this calls NOWPayments, Binance Pay, or Coinbase Commerce.
+     * Generate a unique payment invoice.
+     * In production with BEP-20, we use the same wallet address
+     * but track payments by unique order reference + exact amount.
      */
     static async generateInvoice(currency, amount) {
-        logger.info(`[CryptoService] Generating invoice for ${amount} ${currency}`);
-        
-        // Mocking an external crypto API call (e.g., NOWPayments)
-        const mockWallets = {
-            USDT: 'T9yD14Nj9j7xAB4dbGeiX9h8unkKZg',
-            BTC:  '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
-            ETH:  '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
-        };
+        const cur = (currency || 'USDT').toUpperCase();
+        const invoiceId = 'cryp_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
 
-        const wallet = mockWallets[currency.toUpperCase()] || mockWallets['USDT'];
-        const invoiceId = `cryp_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        logger.info(`[CryptoService] Invoice ${invoiceId}: ${amount} ${cur} → ${RECEIVE_WALLET}`);
+
+        // Get current BNB balance for gas fee check
+        let bnbBalance = 0;
+        try {
+            bnbBalance = await BlockchainService.getBnbBalance();
+        } catch(e) {}
 
         return {
             invoiceId,
-            payAddress: wallet,
+            payAddress: RECEIVE_WALLET,
             payAmount: amount,
-            payCurrency: currency.toUpperCase(),
-            expiresAt: new Date(Date.now() + 30 * 60000).toISOString() // 30 mins
+            payCurrency: cur,
+            network: 'BSC (BEP-20)',
+            expiresAt: new Date(Date.now() + 60 * 60000).toISOString(), // 60 min expiry
+            bnbBalance: bnbBalance,
+            bnbWarning: bnbBalance < 0.01 ? 'Low BNB balance for gas fees' : null
         };
     }
 
     /**
-     * Checks blockchain confirmations.
+     * Check if payment has been received on the blockchain.
+     * Uses BSCScan API to verify USDT (BEP-20) transfers.
      */
-    static async checkConfirmations(invoiceId) {
-        // Simulating block confirmation checking
-        // pending -> confirming -> confirmed
-        const random = Math.random();
-        let status = 'pending';
-        let confirmations = 0;
-
-        if (random > 0.8) {
-            status = 'confirmed';
-            confirmations = 12;
-        } else if (random > 0.4) {
-            status = 'confirming';
-            confirmations = 3;
+    static async checkConfirmations(invoiceId, expectedAmount = null) {
+        // Extract amount from invoice ID or use the stored amount
+        if (!expectedAmount) {
+            return { invoiceId, status: 'pending', confirmations: 0, error: 'No amount specified' };
         }
 
-        return { invoiceId, status, confirmations };
+        try {
+            const payment = await BlockchainService.checkPayment(expectedAmount);
+            if (payment) {
+                logger.info(`[CryptoService] Payment confirmed! TX: ${payment.transactionId}`);
+                return {
+                    invoiceId,
+                    status: 'confirmed',
+                    confirmations: 12,
+                    transactionId: payment.transactionId,
+                    from: payment.from,
+                    amount: payment.amount,
+                    blockNumber: payment.blockNumber
+                };
+            }
+
+            return {
+                invoiceId,
+                status: 'pending',
+                confirmations: 0,
+                message: 'Waiting for payment...'
+            };
+        } catch (err) {
+            logger.error(`[CryptoService] Check error: ${err.message}`);
+            return { invoiceId, status: 'error', confirmations: 0, error: err.message };
+        }
+    }
+
+    /**
+     * Convert fiat amount to USDT (1:1 for stablecoin).
+     */
+    static convertToCrypto(fiatAmount) {
+        return fiatAmount;
     }
 }

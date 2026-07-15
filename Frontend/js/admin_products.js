@@ -74,8 +74,9 @@ function renderProducts(products) {
                     </div>
                 </td>
                 <td><span class="badge ${stockClass}">${stockLabel}</span></td>
-                <td style="text-align:right;">
+                <td style="text-align:right; display:flex; gap:0.5rem; justify-content:flex-end;">
                     <button class="btn-action" title="Edit Product"><i class="ph ph-pencil-simple"></i></button>
+                    <button class="btn-action" style="color:var(--clr-error);" title="Delete Product" onclick="deleteProduct(${p.id})"><i class="ph ph-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -121,6 +122,21 @@ async function handleFileUpload(productId) {
     } catch (e) {
         alert("Upload failed. Network error.");
     }
+}
+
+async function deleteProduct(productId) {
+    if(!confirm('Delete this product permanently?')) return;
+    try {
+        const res = await fetch(`${BASE_URL}/vendor_products.php`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: productId }),
+            credentials: 'include'
+        });
+        const data = await res.json();
+        if(data.success) { alert(data.message); loadProducts(); }
+        else alert(data.message);
+    } catch(e) { alert('Network error.'); }
 }
 
 function filterProducts() {

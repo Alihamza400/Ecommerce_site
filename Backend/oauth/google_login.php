@@ -7,6 +7,13 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../security_functions.php';
 require_once __DIR__ . '/config.php';
 
+$LOGIN_PAGE = "../../Frontend/login.html";
+
+if (!is_google_oauth_ready()) {
+    header("Location: $LOGIN_PAGE?error=oauth_not_configured");
+    exit();
+}
+
 // 1. Generate a secure state token for CSRF protection
 $state = bin2hex(random_bytes(16));
 $_SESSION['oauth_state'] = $state;

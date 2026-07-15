@@ -52,7 +52,7 @@ function is_rate_limited(mysqli $con, string $email): bool {
         SELECT COUNT(*) 
         FROM login_attempts 
         WHERE (email = ? OR ip_address = ?) 
-        AND attempt_time > (NOW() - INTERVAL ? SECOND)
+        AND attempted_at > (NOW() - INTERVAL ? SECOND)
     ");
     $stmt->bind_param("ssi", $email, $ip, $lockout_time);
     $stmt->execute();

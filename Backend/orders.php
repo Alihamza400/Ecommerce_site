@@ -1,20 +1,6 @@
 <?php
-// ============================================================
-// orders.php — Backend API for Checkout and Order History
-// ============================================================
-$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : 'http://localhost';
-header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: $origin");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
 require_once __DIR__ . '/config.php';
+header("Content-Type: application/json");
 session_start();
 
 if (!isset($_SESSION['SESS-ID'])) {
@@ -129,17 +115,37 @@ if ($method === 'POST') {
     
     $address_id     = intval($data['address_id'] ?? 0);
     $payment_method = trim($data['payment_method'] ?? 'credit_card');
-    // Accept real transaction_id from Payment Orchestrator (or null for legacy)
     $ext_transaction_id = trim($data['transaction_id'] ?? '');
     $gateway_used       = trim($data['gateway_used']   ?? $payment_method);
-    
+    $coupon_code        = trim($data['coupon_code'] ?? '');
+    $discount_amount    = floatval($data['discount'] ?? 0);
+    $csrf_token = $data['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+
+    require_once __DIR__ . '/security_functions.php';
+    if (!verify_csrf_token($csrf_token)) {
+        http_response_code(403);
+        echo json_encode(["success" => false, "message" => "Invalid or missing CSRF token."]);
+        exit();
+    }
+
     if ($address_id <= 0) {
         http_response_code(400);
         echo json_encode(["success" => false, "message" => "Valid shipping address required."]);
         exit();
     }
+
+    // Verify address belongs to user
+    $stmt = $con->prepare("SELECT id FROM user_addresses WHERE id = ? AND user_id = ?");
+    $stmt->bind_param("ii", $address_id, $user_id);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows === 0) {
+        http_response_code(403);
+        echo json_encode(["success" => false, "message" => "Invalid shipping address."]);
+        exit();
+    }
+    $stmt->close();
     
-    // 1. Fetch Cart
+    // 1. Fetch Cart with FOR UPDATE lock
     $stmt = $con->prepare("SELECT id FROM carts WHERE user_id = ? LIMIT 1");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
@@ -150,63 +156,103 @@ if ($method === 'POST') {
     $cart_id = $res->fetch_assoc()['id'];
     $stmt->close();
     
-    // 2. Fetch Cart Items & Calculate Total
-    $stmt = $con->prepare("
-        SELECT ci.product_variant_id, ci.quantity, pv.price 
-        FROM cart_items ci JOIN product_variants pv ON ci.product_variant_id = pv.id 
-        WHERE ci.cart_id = ?
-    ");
-    $stmt->bind_param("i", $cart_id);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    
-    $items = [];
-    $total_amount = 0;
-    while($row = $res->fetch_assoc()){
-        $row['price'] = floatval($row['price']);
-        $total_amount += ($row['price'] * intval($row['quantity']));
-        $items[] = $row;
-    }
-    $stmt->close();
-    
-    if(count($items) === 0){
-        http_response_code(400); echo json_encode(["success" => false, "message" => "Your cart is empty."]); exit();
-    }
-    
-    // Provide transaction atomicity mapping to db
+    // 2. Begin transaction with locking
     $con->begin_transaction();
     try {
+        // 2. Fetch Cart Items with FOR UPDATE lock (prevents concurrent modifications)
+        $stmt = $con->prepare("
+            SELECT ci.product_variant_id, ci.quantity, pv.price, pv.stock 
+            FROM cart_items ci 
+            JOIN product_variants pv ON ci.product_variant_id = pv.id 
+            WHERE ci.cart_id = ?
+            FOR UPDATE
+        ");
+        $stmt->bind_param("i", $cart_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        
+        $items = [];
+        $total_amount = 0;
+        while($row = $res->fetch_assoc()){
+            $row['price'] = floatval($row['price']);
+            $row['stock'] = intval($row['stock']);
+            $total_amount += ($row['price'] * intval($row['quantity']));
+            $items[] = $row;
+        }
+        $stmt->close();
+        
+        if(count($items) === 0){
+            $con->rollback();
+            http_response_code(400); echo json_encode(["success" => false, "message" => "Your cart is empty."]); exit();
+        }
+
+        // Verify stock availability for ALL items
+        foreach($items as $i) {
+            if ($i['quantity'] > $i['stock']) {
+                $con->rollback();
+                http_response_code(400);
+                echo json_encode(["success" => false, "message" => "Insufficient stock for one or more items."]);
+                exit();
+            }
+        }
+
+        // Validate and apply coupon
+        $calculated_discount = 0;
+        if (!empty($coupon_code)) {
+            $stmt = $con->prepare("SELECT * FROM coupons WHERE code = ? AND is_active = 1 AND (expires_at IS NULL OR expires_at > NOW()) AND (max_uses IS NULL OR used_count < max_uses)");
+            $stmt->bind_param("s", $coupon_code);
+            $stmt->execute();
+            $coupon = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if ($coupon) {
+                if ($total_amount >= floatval($coupon['min_order_amount'])) {
+                    if ($coupon['discount_type'] === 'percentage') {
+                        $calculated_discount = round($total_amount * floatval($coupon['discount_value']) / 100, 2);
+                    } else {
+                        $calculated_discount = min(floatval($coupon['discount_value']), $total_amount);
+                    }
+                    // Increment coupon usage
+                    $upd = $con->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?");
+                    $upd->bind_param("i", $coupon['id']);
+                    $upd->execute();
+                    $upd->close();
+                }
+            }
+        }
+        $total_amount = max(0, $total_amount - $calculated_discount);
+        
         // Create Order
-        $order_uuid = gen_uuid();
-        $ins_order = $con->prepare("INSERT INTO orders (uuid, user_id, address_id, total_amount, status, payment_status) VALUES (?, ?, ?, ?, 'pending', 'paid')");
-        $ins_order->bind_param("siid", $order_uuid, $user_id, $address_id, $total_amount);
+        $order_uuid = bin2hex(random_bytes(16));
+        $ins_order = $con->prepare("INSERT INTO orders (uuid, user_id, address_id, total_amount, discount_amount, status, payment_status) VALUES (?, ?, ?, ?, ?, 'pending', 'pending')");
+        $ins_order->bind_param("siidd", $order_uuid, $user_id, $address_id, $total_amount, $calculated_discount);
         $ins_order->execute();
         $order_id = $ins_order->insert_id;
         $ins_order->close();
         
-        // Copy items to order_items & Deduct Stock
+        // Copy items to order_items & Deduct Stock (with stock check)
         $ins_item = $con->prepare("INSERT INTO order_items (order_id, product_variant_id, price, quantity) VALUES (?, ?, ?, ?)");
-        $upd_stock = $con->prepare("UPDATE product_variants SET stock = stock - ? WHERE id = ?");
+        $upd_stock = $con->prepare("UPDATE product_variants SET stock = stock - ? WHERE id = ? AND stock >= ?");
         
         foreach($items as $i) {
-            // Insert item
             $ins_item->bind_param("iidi", $order_id, $i['product_variant_id'], $i['price'], $i['quantity']);
             $ins_item->execute();
 
-            // Deduct stock
-            $upd_stock->bind_param("ii", $i['quantity'], $i['product_variant_id']);
+            // Deduct stock with WHERE stock >= quantity (prevents overselling)
+            $upd_stock->bind_param("iii", $i['quantity'], $i['product_variant_id'], $i['quantity']);
             $upd_stock->execute();
+            if ($upd_stock->affected_rows === 0) {
+                throw new Exception("Insufficient stock for item");
+            }
         }
         $ins_item->close();
         $upd_stock->close();
         
-        // Use real Orchestrator transaction ID if provided, else generate fallback
-        $pay_uuid = gen_uuid();
-        $tx_id    = !empty($ext_transaction_id)
-                      ? $ext_transaction_id
-                      : 'TXN-' . strtoupper(substr(md5(uniqid()), 0, 10));
-        $ins_pay = $con->prepare("INSERT INTO payments (uuid, order_id, payment_method, transaction_id, amount, status) VALUES (?, ?, ?, ?, ?, 'success')");
-        $ins_pay->bind_param("sissd", $pay_uuid, $order_id, $gateway_used, $tx_id, $total_amount);
+        // Record payment
+        $pay_uuid = bin2hex(random_bytes(16));
+        $tx_id = !empty($ext_transaction_id) ? $ext_transaction_id : 'TXN-' . strtoupper(bin2hex(random_bytes(5)));
+        $pay_status = !empty($ext_transaction_id) ? 'success' : 'pending';
+        $ins_pay = $con->prepare("INSERT INTO payments (uuid, order_id, payment_method, transaction_id, amount, status) VALUES (?, ?, ?, ?, ?, ?)");
+        $ins_pay->bind_param("sissds", $pay_uuid, $order_id, $gateway_used, $tx_id, $total_amount, $pay_status);
         $ins_pay->execute();
         $ins_pay->close();
         
@@ -220,14 +266,15 @@ if ($method === 'POST') {
         
         echo json_encode([
             "success" => true, 
-            "message" => "Checkout successful! Order placed.", 
+            "message" => "Order placed! Awaiting payment confirmation.", 
             "order_id" => $order_uuid
         ]);
         
     } catch(Exception $e) {
         $con->rollback();
         http_response_code(500);
-        echo json_encode(["success" => false, "message" => "Checkout failed: " . $e->getMessage()]);
+        echo json_encode(["success" => false, "message" => "Checkout failed. Please try again."]);
+        error_log("Checkout Error: " . $e->getMessage());
     }
     exit();
 }

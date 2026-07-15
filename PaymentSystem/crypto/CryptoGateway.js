@@ -7,48 +7,49 @@ export class CryptoGateway extends BasePaymentGateway {
         super('Crypto');
     }
 
-    /**
-     * @param {Object} data - { amount, currency (e.g. USDT), customer, metadata }
-     */
     async pay(data) {
-        logger.info(`[CryptoGateway] Initializing crypto payment for ${data.amount} ${data.currency}`);
-        
+        logger.info(`[CryptoGateway] Real crypto payment: ${data.amount} ${data.currency}`);
+
         try {
-            // Generate invoice/address via CryptoService
             const invoice = await CryptoService.generateInvoice(data.currency, data.amount);
+            // Store the expected amount for later verification
+            this._expectedAmount = data.amount;
 
             return {
                 success: true,
                 transactionId: invoice.invoiceId,
-                status: 'pending', // Crypto is always pending until blockchain confirmation
-                metadata: { 
-                    method: 'crypto', 
+                status: 'pending',
+                metadata: {
+                    method: 'crypto',
                     payAddress: invoice.payAddress,
                     payAmount: invoice.payAmount,
                     payCurrency: invoice.payCurrency,
-                    expiresAt: invoice.expiresAt
+                    network: invoice.network,
+                    expiresAt: invoice.expiresAt,
+                    bnbWarning: invoice.bnbWarning
                 }
             };
         } catch (error) {
-            logger.error(`[CryptoGateway] Payment initiation failed: ${error.message}`);
+            logger.error(`[CryptoGateway] Failed: ${error.message}`);
             throw new Error(`Crypto Gateway Error: ${error.message}`);
         }
     }
 
     async refund(transactionId) {
-        logger.warn(`[CryptoGateway] Refund requested for ${transactionId}. Crypto refunds require manual processing or specific API support.`);
-        // In real world, this might call an API to send funds back to a provided wallet address
-        return { success: false, message: `Manual intervention required for crypto refund: ${transactionId}` };
+        return { success: false, message: `Manual refund required for: ${transactionId}. Send USDT from your wallet manually.` };
     }
 
-    async verify(transactionId) {
-        logger.info(`[CryptoGateway] Verifying transaction ${transactionId}`);
-        const result = await CryptoService.checkConfirmations(transactionId);
-        
+    async verify(transactionId, amount) {
+        logger.info(`[CryptoGateway] Verifying ${transactionId}`);
+        const result = await CryptoService.checkConfirmations(transactionId, amount);
         return {
-            success: true,
+            success: result.status === 'confirmed',
             status: result.status,
-            metadata: { confirmations: result.confirmations }
+            metadata: {
+                confirmations: result.confirmations,
+                transactionId: result.transactionId,
+                from: result.from
+            }
         };
     }
 }

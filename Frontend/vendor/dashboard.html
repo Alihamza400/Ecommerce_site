@@ -90,7 +90,7 @@
                     <input type="file" class="form-input" id="p-image" accept="image/*" style="padding: 0.5rem;" />
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Description</label>
+                    <label class="form-label">Description <span style="font-weight:400;color:var(--clr-muted);font-size:0.8rem;">— <a href="#" onclick="generateAIDescription();return false;" style="color:var(--clr-primary-light);">✨ Generate with AI</a></span></label>
                     <textarea class="form-input" id="p-desc" rows="3" style="resize:vertical;"></textarea>
                 </div>
                 
@@ -155,7 +155,11 @@
     async function fetchProducts() {
         const list = document.getElementById('products-list');
         try {
-            const res = await fetch(`${BASE_URL}/vendor/products.php`, { credentials: 'include' });
+            const res = await fetch(`${BASE_URL}/vendor_products.php`, { credentials: 'include' });
+            if (!res.ok) {
+                list.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--clr-error);">Server error (${res.status}). Try a hard refresh (Ctrl+F5).</div>`;
+                return;
+            }
             const data = await res.json();
             
             if (data.success) {
@@ -199,9 +203,10 @@
                             <td>$${Number(p.lowest_price).toFixed(2)}</td>
                             <td>${p.total_stock}</td>
                             <td><span style="padding:0.2rem 0.5rem; border-radius:99px; font-size:0.8rem; background:rgba(16,185,129,0.1); color:#10b981;">${p.status.toUpperCase()}</span></td>
-                            <td>
-                                <button onclick='populateForm(${JSON.stringify(p).replace(/'/g, "&apos;")})' style="background:transparent; border:none; color:var(--clr-primary); cursor:pointer; font-size:1.1rem;" title="Edit Product"><i class="ph ph-pencil-simple"></i></button>
-                            </td>
+                             <td style="display:flex; gap:0.5rem;">
+                                 <button onclick='populateForm(JSON.parse(decodeURIComponent("${encodeURIComponent(JSON.stringify(p))}")))' style="background:transparent; border:none; color:var(--clr-primary); cursor:pointer; font-size:1.1rem;" title="Edit Product"><i class="ph ph-pencil-simple"></i></button>
+                                 <button onclick="deleteProduct(${p.id}, '${escapeHTML(p.name)}')" style="background:transparent; border:none; color:var(--clr-error); cursor:pointer; font-size:1.1rem;" title="Delete Product"><i class="ph ph-trash"></i></button>
+                             </td>
                         </tr>
                     `;
                 });
@@ -217,6 +222,11 @@
         }
     }
 
+    let formCsrfToken = '';
+    (async function() {
+        try { const r = await fetch(BASE_URL + '/csrf_token.php', { credentials: 'include' }); const d = await r.json(); if (d.success) formCsrfToken = d.csrf_token; } catch(e) {}
+    })();
+
     function setupForm() {
         document.getElementById('add-product-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -224,6 +234,7 @@
             btn.classList.add('loading'); btn.disabled = true;
             
             const formData = new FormData();
+            formData.append('csrf_token', formCsrfToken);
             formData.append('id', document.getElementById('p-id').value);
             formData.append('existing_image', document.getElementById('p-existing-image').value);
             formData.append('name', document.getElementById('p-name').value);
@@ -239,7 +250,7 @@
             }
             
             try {
-                const res = await fetch(`${BASE_URL}/vendor/products.php`, {
+                const res = await fetch(`${BASE_URL}/vendor_products.php`, {
                     method: 'POST',
                     body: formData,
                     credentials: 'include'
@@ -259,10 +270,51 @@
         });
     }
 
+    async function generateAIDescription() {
+        const name = document.getElementById('p-name').value.trim();
+        if (!name) { showAlert('Enter a product name first.'); return; }
+        const brand = document.getElementById('p-brand').value.trim();
+        const cat = document.getElementById('p-cat').selectedOptions[0]?.text || '';
+        const btn = document.getElementById('p-desc');
+        btn.placeholder = 'Generating...';
+        try {
+            const res = await fetch('http://localhost:8000/assistant/generate-description', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, brand, category: cat, keywords: '' })
+            });
+            const data = await res.json();
+            if (data.description) {
+                btn.value = data.description;
+                showAlert('Description generated!', 'success');
+            } else {
+                showAlert('Failed to generate description.');
+            }
+        } catch(e) {
+            showAlert('AI Service not running. Start it on port 8000.');
+        }
+        btn.placeholder = 'Product description';
+    }
+
+    async function deleteProduct(id, name) {
+        if(!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+        try {
+            const res = await fetch(`${BASE_URL}/vendor_products.php`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: id }),
+                credentials: 'include'
+            });
+            const data = await res.json();
+            if (data.success) { showAlert(data.message, 'success'); fetchProducts(); }
+            else showAlert(data.message);
+        } catch(e) { showAlert('Network error.'); }
+    }
+
     function escapeHTML(str) {
         if (!str) return '';
         return str.replace(/[&<>'"]/g, 
-            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;", '"': '&quot;' }[tag])
         );
     }
 

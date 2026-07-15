@@ -4,10 +4,8 @@
 
 const BASE_URL = (() => {
   const proto = window.location.protocol;
-  const host  = window.location.hostname || 'localhost';
-  const port  = window.location.port ? `:${window.location.port}` : '';
-  if (proto === 'file:') return 'http://localhost/Ecommerce_site/Backend';
-  return `${proto}//${host}${port}/Ecommerce_site/Backend`;
+  if (proto === 'file:') return 'http://localhost:8080/Backend';
+  return window.location.pathname.includes('/Ecommerce_site/') ? '/Ecommerce_site/Backend' : '/Backend';
 })();
 
 let allUsers = [];

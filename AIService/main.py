@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routers import search, chat
+from api.routers import search, chat, assistant
 from services.vector_store import vector_store
 import uvicorn
 
@@ -22,6 +22,7 @@ app.add_middleware(
 # Include Routers
 app.include_router(search.router)
 app.include_router(chat.router)
+app.include_router(assistant.router)
 
 @app.on_event("startup")
 async def startup_event():
@@ -29,7 +30,7 @@ async def startup_event():
     Initialize Qdrant collection on startup.
     """
     # Gemini embeddings are 3072 dimensions for models/gemini-embedding-001
-    vector_store.ensure_collection(vector_size=3072)
+    vector_store.ensure_collection(vector_size=1536)
     print("AI Service Started and Qdrant Collection Ready.")
 
 @app.get("/")

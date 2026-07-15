@@ -7,27 +7,35 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../security_functions.php';
 require_once __DIR__ . '/config.php';
 
+$LOGIN_PAGE = "../../Frontend/login.html";
+
 // ── 1. Validate State (CSRF Protection) ──────────────────────
 $state = $_GET['state'] ?? '';
 $saved_state = $_SESSION['oauth_state'] ?? '';
 
 if (!$state || $state !== $saved_state) {
-    if (empty($saved_state)) {
-        die("Invalid state: Session is empty. (Check if you are using 'localhost' vs '127.0.0.1')");
-    }
-    die("Invalid state: Tokens do not match. (Possible CSRF or session overwrite)");
+    error_log("OAuth state mismatch: state=$state, saved_state=" . ($saved_state ?: 'empty'));
+    header("Location: $LOGIN_PAGE?error=oauth_state_mismatch");
+    exit();
 }
 unset($_SESSION['oauth_state']);
 
 // ── 2. Handle Errors ──────────────────────────────────────────
 if (isset($_GET['error'])) {
-    header("Location: ../../Frontend/login.html?error=" . urlencode($_GET['error']));
+    header("Location: $LOGIN_PAGE?error=" . urlencode($_GET['error']));
     exit();
 }
 
 $code = $_GET['code'] ?? '';
 if (!$code) {
-    die("No authorization code provided.");
+    header("Location: $LOGIN_PAGE?error=no_auth_code");
+    exit();
+}
+
+if (!is_google_oauth_ready()) {
+    error_log("OAuth not configured: missing credentials");
+    header("Location: $LOGIN_PAGE?error=oauth_not_configured");
+    exit();
 }
 
 // ── 3. Exchange Code for Access Token ────────────────────────
@@ -41,9 +49,7 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
     'redirect_uri'  => GOOGLE_REDIRECT_URI,
     'grant_type'    => 'authorization_code'
 ]));
-
-// Bypass SSL verification for local WAMP environments
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, OAUTH_SSL_VERIFY);
 
 $response = curl_exec($ch);
 $err = curl_error($ch);
@@ -51,13 +57,15 @@ $token_data = json_decode($response, true);
 
 if ($response === false) {
     error_log("cURL Error in Token Exchange: " . $err);
-    die("cURL Network Error: " . $err);
+    header("Location: $LOGIN_PAGE?error=token_exchange_failed");
+    exit();
 }
 curl_close($ch);
 
 if (!isset($token_data['access_token'])) {
-    error_log("OAuth Token Exchange Error. Response: " . $response);
-    die("Failed to obtain access token. Google says: " . ($token_data['error_description'] ?? 'Unknown Error'));
+    error_log("OAuth Token Exchange Error: " . ($token_data['error_description'] ?? $response));
+    header("Location: $LOGIN_PAGE?error=invalid_client");
+    exit();
 }
 
 // ── 4. Fetch User Profile Info ──────────────────────────────
@@ -66,9 +74,7 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Authorization: Bearer ' . $token_data['access_token']
 ]);
-
-// Bypass SSL verification for local WAMP environments
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, OAUTH_SSL_VERIFY);
 
 $user_info_raw = curl_exec($ch);
 $user_info_err = curl_error($ch);
@@ -76,21 +82,22 @@ $user_info = json_decode($user_info_raw, true);
 
 if ($user_info_raw === false) {
     error_log("cURL Error in UserInfo Fetch: " . $user_info_err);
-    die("cURL Network Error: " . $user_info_err);
+    header("Location: $LOGIN_PAGE?error=userinfo_failed");
+    exit();
 }
 curl_close($ch);
 
 if (!isset($user_info['email'])) {
     error_log("OAuth UserInfo Error: " . $user_info_raw);
-    die("Failed to fetch user information.");
+    header("Location: $LOGIN_PAGE?error=userinfo_no_email");
+    exit();
 }
 
 // ── 5. Database Integration (Find or Create User) ───────────
 $email = $user_info['email'];
 $name  = $user_info['name'] ?? 'Google User';
-$google_id = $user_info['sub']; // Unique Google ID
+$google_id = $user_info['sub'];
 
-// Check if user exists by google_id OR email
 $stmt = $con->prepare("SELECT id, name, email, role, status FROM users WHERE google_id = ? OR email = ? LIMIT 1");
 $stmt->bind_param("ss", $google_id, $email);
 $stmt->execute();
@@ -99,9 +106,8 @@ $user = $result->fetch_assoc();
 $stmt->close();
 
 if (!$user) {
-    // Create new user
     $uuid = generate_uuid();
-    $temp_pass = bin2hex(random_bytes(16)); // Random password for OAuth users
+    $temp_pass = bin2hex(random_bytes(16));
     $hashed = password_hash($temp_pass, PASSWORD_BCRYPT);
     $role = 'customer';
     $status = 'active';
@@ -120,14 +126,15 @@ if (!$user) {
         ];
     } else {
         error_log("OAuth User Creation Error: " . $con->error);
-        die("Error creating local account.");
+        header("Location: $LOGIN_PAGE?error=account_creation_failed");
+        exit();
     }
     $stmt->close();
 }
 
 // ── 6. Initialize Session ───────────────────────────────────
-if ($user['status'] === 'blocked') {
-    header("Location: ../../Frontend/login.html?error=account_blocked");
+if ($user['status'] === 'suspended' || $user['status'] === 'inactive') {
+    header("Location: $LOGIN_PAGE?error=account_blocked");
     exit();
 }
 

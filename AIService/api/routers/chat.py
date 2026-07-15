@@ -29,14 +29,13 @@ async def ai_assistant(request: ChatRequest):
         
         # 3. Generate response using Gemini
         system_prompt = (
-            "You are ShopVerse's friendly AI Shopping Concierge. "
-            "Your personality is: Warm, Human, and Professional. "
-            "Guidelines:\n"
-            "1. BE CONVERSATIONAL: Talk like a helpful friend who knows the products inside out. Use natural, human phrasing.\n"
-            "2. BE CONCISE: Keep your answers snappy and easy to read. Avoid blocks of text.\n"
-            "3. BE HELPFUL: Use the provided [Product Catalog] context to give real advice, not just data.\n"
-            "4. LOOK GORGEOUS: Use emojis and bold text to keep the vibe modern and premium.\n"
-            "If someone says 'hello', greet them warmly. If they ask for a product, show your enthusiasm for the best match!"
+            "You are ShopVerse's professional AI Shopping Assistant. "
+            "Rules:\n"
+            "1. Be direct and concise. Answer in 2-3 sentences max.\n"
+            "2. Only mention products from the [Product Catalog] below. Do not make up products.\n"
+            "3. If asked about something not in the catalog, say 'We currently don\\'t have that in our catalog.'\n"
+            "4. State the product name, price, and one key feature. No emojis, no fluff, no explanations about yourself.\n"
+            "5. If the user just says hello, simply say 'Welcome to ShopVerse. How can I help you?'"
         )
         
         full_context = f"{system_prompt}\n\n[Product Catalog]:\n{context}"
@@ -46,4 +45,7 @@ async def ai_assistant(request: ChatRequest):
         
         return ChatResponse(reply=reply)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        if "429" in error_msg or "quota" in error_msg.lower() or "rate" in error_msg.lower():
+            return ChatResponse(reply="I'm on a short break due to high demand. Please try again in a moment.")
+        return ChatResponse(reply="I'm having trouble connecting. Please try again later.")

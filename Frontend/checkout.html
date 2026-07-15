@@ -4,11 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Checkout — ShopVerse</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css?v=9291" />
   <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js" defer></script>
   <script src="js/session_check.js"></script>
 </head>
-<body>
+<body class="entrance-fade">
 
   <!-- Navigation -->
   <header class="site-header">
@@ -41,7 +42,7 @@
         <div class="checkout-forms">
             
             <!-- Address Selection -->
-            <div class="checkout-panel" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 2rem;">
+            <div class="checkout-panel reveal delay-2" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 2rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
                     <h3 style="font-size: 1.25rem; display:flex; align-items:center; gap:0.5rem;"><i class="ph ph-map-pin"></i> Shipping Address</h3>
                     <a href="profile.html" class="btn-ghost" style="font-size:0.8rem;">Manage Addresses</a>
@@ -52,7 +53,7 @@
             </div>
 
             <!-- Payment Method — Now powered by Payment Orchestrator -->
-            <div class="checkout-panel" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 2rem;">
+            <div class="checkout-panel reveal delay-2" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 2rem;">
                 <h3 style="font-size: 1.25rem; display:flex; align-items:center; gap:0.5rem; margin-bottom: 0.5rem;">
                     <i class="ph ph-credit-card"></i> Payment Method
                 </h3>
@@ -102,16 +103,27 @@
         </div>
 
         <!-- Right Side: Order Summary -->
-        <div class="checkout-summary" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 1.5rem; position: sticky; top: 100px;">
+        <div class="checkout-summary reveal" style="background: var(--clr-surface-2); border: 1px solid var(--clr-border); border-radius: var(--radius-md); padding: 1.5rem; position: sticky; top: 100px;">
             <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Order Summary</h3>
             
             <div id="checkout-items" style="margin-bottom: 2rem; max-height: 300px; overflow-y:auto; border-bottom: 1px solid var(--clr-border); padding-bottom: 1rem;">
                 <div class="loading-state">Loading cart payload...</div>
             </div>
 
+            <div class="coupon-section" style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--clr-border);">
+                <div style="display:flex;gap:0.5rem;">
+                    <input type="text" id="coupon-input" placeholder="Coupon code" style="flex:1;padding:0.5rem;background:var(--clr-surface-2);border:1px solid var(--clr-border);border-radius:var(--radius-sm);color:#fff;font-size:0.85rem;">
+                    <button onclick="applyCoupon()" style="padding:0.5rem 1rem;background:var(--clr-primary);border:none;border-radius:var(--radius-sm);color:#fff;font-weight:600;cursor:pointer;font-size:0.85rem;">Apply</button>
+                </div>
+                <div id="coupon-message" style="font-size:0.8rem;margin-top:0.3rem;"></div>
+            </div>
             <div style="display:flex; justify-content:space-between; margin-bottom: 0.5rem;">
                 <span style="color:var(--clr-muted);">Subtotal</span>
                 <span id="checkout-subtotal">—</span>
+            </div>
+            <div id="discount-row" style="display:none; justify-content:space-between; margin-bottom: 0.5rem; color:#10b981;">
+                <span>Discount</span>
+                <span id="checkout-discount">-$0.00</span>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom: 1.5rem;">
                 <span style="color:var(--clr-muted);">Shipping</span>
@@ -125,7 +137,7 @@
             <!-- Payment status indicator -->
             <div id="payment-status" style="display:none; margin-bottom:1rem; padding:0.75rem 1rem; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600;"></div>
 
-            <button id="btn-place-order" class="btn-primary" style="width:100%; padding:1rem; font-size:1rem; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+            <button id="btn-place-order" class="btn-ripple" class="btn-primary" style="width:100%; padding:1rem; font-size:1rem; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
                 <i class="ph ph-lock-key"></i> Place Order Securely
             </button>
             <p style="text-align:center; font-size:0.75rem; color:var(--clr-muted); margin-top:0.75rem;">
@@ -168,6 +180,7 @@
     }
   </style>
 
-  <script src="js/checkout.js?v=3"></script>
+  <script src="js/checkout.js?v=0103"></script>
+  <script src="js/animations.js?v=9676"></script>
 </body>
 </html>

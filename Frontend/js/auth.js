@@ -1,7 +1,9 @@
 // ============================================================
 // auth.js — Accurate & Optimized Decoupled API logic
 // ============================================================
-const BASE_URL = 'http://localhost/Ecommerce_site/Backend';
+const BASE_URL = (window.location.protocol === 'file:')
+  ? 'http://localhost:8080/Backend'
+  : (window.location.pathname.includes('/Ecommerce_site/') ? '/Ecommerce_site/Backend' : '/Backend');
 
 let csrfToken = null;
 

@@ -1,7 +1,7 @@
 // cart.js — Shopping Cart Fetch Controller
 // ============================================================
 
-const BASE_URL = '/Ecommerce_site/Backend';
+const BASE_URL = window.location.pathname.includes('/Ecommerce_site/') ? '/Ecommerce_site/Backend' : '/Backend';
 
 // Centralized auth check handled by session_check.js.
 function showAlert(text) {
@@ -24,7 +24,7 @@ async function loadCart() {
 
     try {
         const res = await fetch(`${BASE_URL}/cart.php`, { credentials: 'include' });
-        if (res.status === 401) return; // Handled by loadGlobalAuth auth redirect
+        if (res.status === 401) { window.location.href = 'login.html'; return; }
 
         const data = await res.json();
         if (data.success) {
@@ -75,7 +75,7 @@ function renderCartItems(items, subTotal) {
             <div class="cart-item" data-id="${item.cart_item_id}">
                 <div class="cart-img-box"><i class="ph ${icon}"></i></div>
                 <div>
-                    <div class="cart-item-brand">${item.brand || item.category_name}</div>
+                    <div class="cart-item-brand">${escapeHTML(item.brand || item.category_name)}</div>
                     <div class="cart-item-title">${escapeHTML(item.product_name)}</div>
                     
                     <div class="qty-controls">

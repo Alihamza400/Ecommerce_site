@@ -17,10 +17,10 @@ class VectorStore:
             )
         self.collection_name = settings.PRODUCTS_COLLECTION
 
-    def ensure_collection(self, vector_size: int = 3072):
+    def ensure_collection(self, vector_size: int = 1536):
         """
         Ensure the Qdrant collection exists.
-        Note: Gemini embedding-001 outputs 3072-dimensional vectors.
+        Note: OpenRouter embeddings are 1536 dimensions (text-embedding-3-small).
         """
         collections = self.client.get_collections().collections
         collection_names = [c.name for c in collections]

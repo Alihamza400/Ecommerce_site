@@ -1,13 +1,12 @@
 /**
- * admin_vendors.js — Controller for Vendor Management
+ * admin_vendors.js — Controller for Vendor Management (v2)
  */
+console.log('admin_vendors.js loaded (v2 with Delete/Revoke)');
 
 const BASE_URL = (() => {
   const proto = window.location.protocol;
-  const host  = window.location.hostname || 'localhost';
-  const port  = window.location.port ? `:${window.location.port}` : '';
-  if (proto === 'file:') return 'http://localhost/Ecommerce_site/Backend';
-  return `${proto}//${host}${port}/Ecommerce_site/Backend`;
+  if (proto === 'file:') return 'http://localhost:8080/Backend';
+  return window.location.pathname.includes('/Ecommerce_site/') ? '/Ecommerce_site/Backend' : '/Backend';
 })();
 
 let allVendors = [];
@@ -51,7 +50,7 @@ function renderVendors(vendors) {
     }
 
     tbody.innerHTML = vendors.map(v => {
-        const statusClass = v.vendor_status === 'active' ? 'badge-delivered' : 'badge-pending';
+        const statusClass = v.vendor_status === 'active' ? 'badge-delivered' : (v.vendor_status === 'suspended' ? 'badge-cancelled' : 'badge-pending');
 
         return `
             <tr>
@@ -60,13 +59,18 @@ function renderVendors(vendors) {
                 <td style="color:var(--clr-muted);">${v.email}</td>
                 <td><span class="badge ${statusClass}">${v.vendor_status}</span></td>
                 <td style="text-align:right;">
-                    <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                    <div style="display:flex; gap:0.5rem; justify-content:flex-end; flex-wrap:wrap;">
                         ${v.vendor_status === 'inactive' ? `
                             <button class="btn-approve" style="padding:0.4rem 0.8rem; background:var(--clr-success); color:#fff; border:none; border-radius:var(--radius-sm); font-weight:600; cursor:pointer;" onclick="processVendor(${v.vendor_id}, 'approve')">Approve</button>
                             <button class="btn-reject" style="padding:0.4rem 0.8rem; background:rgba(239,68,68,0.1); color:var(--clr-error); border:1px solid var(--clr-error); border-radius:var(--radius-sm); font-weight:600; cursor:pointer;" onclick="processVendor(${v.vendor_id}, 'reject')">Deny</button>
-                        ` : `
-                            <i class="ph ph-check-circle" style="color:var(--clr-success); font-size:1.2rem;"></i>
-                        `}
+                        ` : v.vendor_status === 'active' ? `
+                            <button class="btn-remove" style="padding:0.4rem 0.8rem; background:rgba(239,68,68,0.1); color:var(--clr-error); border:1px solid var(--clr-error); border-radius:var(--radius-sm); font-weight:600; cursor:pointer;" onclick="processVendor(${v.vendor_id}, 'remove')">Suspend</button>
+                            <button class="btn-revoke" style="padding:0.4rem 0.8rem; background:rgba(220,38,38,0.15); color:#dc2626; border:1px solid #dc2626; border-radius:var(--radius-sm); font-weight:600; cursor:pointer;" onclick="processVendor(${v.vendor_id}, 'revoke')">Revoke</button>
+                        ` : v.vendor_status === 'suspended' ? `
+                            <button class="btn-restore" style="padding:0.4rem 0.8rem; background:rgba(59,130,246,0.1); color:var(--clr-primary); border:1px solid var(--clr-primary); border-radius:var(--radius-sm); font-weight:600; cursor:pointer;" onclick="processVendor(${v.vendor_id}, 'restore')">Restore</button>
+                        ` : ``
+                        }
+                        <button class="btn-delete" style="padding:0.4rem 0.8rem; background:rgba(127,29,29,0.2); color:#ef4444; border:1px solid #7f1d1d; border-radius:var(--radius-sm); font-weight:600; cursor:pointer;" onclick="processVendor(${v.vendor_id}, 'delete')">Delete</button>
                     </div>
                 </td>
             </tr>
@@ -96,6 +100,7 @@ async function processVendor(vendorId, action) {
 function updateStats(vendors) {
     document.getElementById('stat-active-vendors').textContent = vendors.filter(v => v.vendor_status === 'active').length;
     document.getElementById('stat-pending-vendors').textContent = vendors.filter(v => v.vendor_status === 'inactive').length;
+    document.getElementById('stat-suspended-vendors').textContent = vendors.filter(v => v.vendor_status === 'suspended').length;
 }
 
 function filterVendors() {
