@@ -3,6 +3,8 @@ FROM php:8.3-apache AS base
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     supervisor \
+    mariadb-server \
+    mariadb-client \
     nodejs \
     npm \
     python3 \
@@ -35,9 +37,11 @@ COPY default.conf /etc/nginx/conf.d/default.conf
 RUN rm -f /etc/nginx/sites-enabled/default
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 RUN chown -R www-data:www-data /app/Backend 2>/dev/null || true
 
 EXPOSE 80
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/start.sh"]
