@@ -1,12 +1,13 @@
 #!/bin/bash
 set -e
 
+APP_DIR="${APP_DIR:-$(pwd)}"
 DB_USER=${DB_USERNAME:-alihamza}
 DB_PASS=${DB_PASSWORD:-R@i123ali}
 DB_NAME=${DB_DATABASE:-Ecommerce_site}
 ROOT_PASS=${MYSQL_ROOT_PASSWORD:-rootpassword}
 MYSQL_DATA=/var/lib/mysql
-SCHEMA_FILE=/app/schema.sql
+SCHEMA_FILE="$APP_DIR/schema.sql"
 QDRANT_DATA=/var/lib/qdrant/storage
 
 # ── Apache Config (idempotent) ───────────────────────────────
