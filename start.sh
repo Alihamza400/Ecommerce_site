@@ -9,6 +9,39 @@ ROOT_PASS=${MYSQL_ROOT_PASSWORD:-rootpassword}
 MYSQL_DATA=/var/lib/mysql
 SCHEMA_FILE="$APP_DIR/schema.sql"
 QDRANT_DATA=/var/lib/qdrant/storage
+SETUP_MARKER="$APP_DIR/.setup_done"
+
+# ── First-run setup (install project dependencies) ───────────
+if [ ! -f "$SETUP_MARKER" ]; then
+    echo "→ First run — installing project dependencies..."
+
+    if command -v composer &> /dev/null; then
+        echo "  → PHP dependencies..."
+        composer install --working-dir="$APP_DIR/Backend" --no-dev --no-interaction 2>/dev/null || true
+    fi
+
+    if command -v npm &> /dev/null; then
+        echo "  → Node.js dependencies..."
+        npm install --prefix "$APP_DIR/PaymentSystem" --production 2>/dev/null || true
+    fi
+
+    if command -v pip3 &> /dev/null || command -v pip &> /dev/null; then
+        echo "  → Python dependencies..."
+        PIP=$(command -v pip3 || command -v pip)
+        $PIP install -r "$APP_DIR/AIService/requirements.txt" --break-system-packages 2>/dev/null || \
+        $PIP install -r "$APP_DIR/AIService/requirements.txt" 2>/dev/null || true
+    fi
+
+    if ! command -v qdrant &> /dev/null && [ ! -f /usr/local/bin/qdrant ]; then
+        echo "  → Downloading Qdrant..."
+        curl -fsSL https://github.com/qdrant/qdrant/releases/download/v1.12.5/qdrant-x86_64-unknown-linux-gnu.tar.gz -o /tmp/qdrant.tar.gz
+        tar xzf /tmp/qdrant.tar.gz -C /usr/local/bin/
+        rm /tmp/qdrant.tar.gz
+    fi
+
+    touch "$SETUP_MARKER"
+    echo "→ Setup complete."
+fi
 
 # ── Apache Config (idempotent) ───────────────────────────────
 if [ -f /etc/apache2/ports.conf ]; then
@@ -57,12 +90,6 @@ if ! mysql -u root --password="$ROOT_PASS" -e "SELECT 1 FROM \`$DB_NAME\`.produc
 fi
 
 # ── Start Qdrant ─────────────────────────────────────────────
-if ! command -v qdrant &> /dev/null && [ ! -f /usr/local/bin/qdrant ]; then
-    echo "→ Downloading Qdrant..."
-    curl -fsSL https://github.com/qdrant/qdrant/releases/download/v1.12.5/qdrant-x86_64-unknown-linux-gnu.tar.gz -o /tmp/qdrant.tar.gz
-    tar xzf /tmp/qdrant.tar.gz -C /usr/local/bin/
-    rm /tmp/qdrant.tar.gz
-fi
 echo "→ Starting Qdrant vector database..."
 /usr/local/bin/qdrant --storage "$QDRANT_DATA" &
 QDRANT_PID=$!
