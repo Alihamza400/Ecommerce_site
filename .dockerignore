@@ -1,9 +1,10 @@
 .git/
 .gitignore
+.github/
 AGENTS.md
 README.md
 .env
-.env.example
+.gitkeep
 node_modules/
 vendor/
 __pycache__/
@@ -11,3 +12,9 @@ __pycache__/
 venv/
 *.log
 logs/
+Dockerfile.backend
+Dockerfile.frontend
+Dockerfile.payment
+Dockerfile.ai
+docker-compose.yml
+refresh_versions.sh

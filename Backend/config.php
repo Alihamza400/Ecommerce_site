@@ -74,7 +74,8 @@ if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
 // ── CORS Security ────────────────────────────────────────────
 $allowed_origins = ['http://localhost', 'http://127.0.0.1', 'http://localhost:80', 'http://localhost:8080'];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (in_array($origin, $allowed_origins)) {
+$host = $_SERVER['HTTP_HOST'] ?? '';
+if (in_array($origin, $allowed_origins) || $origin === "http://$host" || $origin === "https://$host") {
     header("Access-Control-Allow-Origin: $origin");
 } else {
     header("Access-Control-Allow-Origin: http://localhost");
