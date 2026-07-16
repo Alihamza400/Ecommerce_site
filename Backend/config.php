@@ -23,10 +23,10 @@ if (file_exists($env_file)) {
     }
 }
 
-$server   = getenv('DB_HOST') ?: '';
-$username = getenv('DB_USERNAME') ?: 'alihamza';
+$server   = getenv('DB_HOST') ?: 'sql.infinityfree.com';
+$username = getenv('DB_USERNAME') ?: 'if0_42419998';
 $password = getenv('DB_PASSWORD') ?: 'R@i123ali';
-$database = getenv('DB_DATABASE') ?: 'Ecommerce_site';
+$database = getenv('DB_DATABASE') ?: 'if0_42419998_ecommerce_db';
 
 $hosts = [];
 if (!empty($server)) {
