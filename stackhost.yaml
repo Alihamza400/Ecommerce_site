@@ -1,9 +1,11 @@
 runtime:
   image: ubuntu:22.04
 commands:
-  package: "nginx apache2 supervisor mariadb-server mariadb-client php8.1 php8.1-mysqli php8.1-cli libapache2-mod-php8.1 nodejs npm python3 python3-pip python3-venv curl"
+  package: "nginx apache2 supervisor mariadb-server mariadb-client php8.1 php8.1-mysqli php8.1-cli libapache2-mod-php8.1 composer nodejs npm python3 python3-pip python3-venv curl"
   build:
-    - "bash build.sh"
+    - "composer install --working-dir=Backend --no-dev --no-interaction"
+    - "npm install --prefix PaymentSystem --production"
+    - "pip install -r AIService/requirements.txt --break-system-packages"
   start: "bash start.sh"
 repository:
   branch: main

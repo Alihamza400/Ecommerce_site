@@ -57,6 +57,12 @@ if ! mysql -u root --password="$ROOT_PASS" -e "SELECT 1 FROM \`$DB_NAME\`.produc
 fi
 
 # ── Start Qdrant ─────────────────────────────────────────────
+if ! command -v qdrant &> /dev/null && [ ! -f /usr/local/bin/qdrant ]; then
+    echo "→ Downloading Qdrant..."
+    curl -fsSL https://github.com/qdrant/qdrant/releases/download/v1.12.5/qdrant-x86_64-unknown-linux-gnu.tar.gz -o /tmp/qdrant.tar.gz
+    tar xzf /tmp/qdrant.tar.gz -C /usr/local/bin/
+    rm /tmp/qdrant.tar.gz
+fi
 echo "→ Starting Qdrant vector database..."
 /usr/local/bin/qdrant --storage "$QDRANT_DATA" &
 QDRANT_PID=$!
