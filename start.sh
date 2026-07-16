@@ -7,7 +7,9 @@ DB_NAME=${DB_DATABASE:-Ecommerce_site}
 ROOT_PASS=${MYSQL_ROOT_PASSWORD:-rootpassword}
 MYSQL_DATA=/var/lib/mysql
 SCHEMA_FILE=/app/schema.sql
+QDRANT_DATA=/var/lib/qdrant/storage
 
+# ── MySQL Init (first run only) ──────────────────────────────
 if [ ! -d "$MYSQL_DATA/mysql" ]; then
     echo "→ Initializing MySQL data directory..."
     mysql_install_db --user=mysql --datadir="$MYSQL_DATA" > /dev/null 2>&1
@@ -25,6 +27,7 @@ if [ ! -d "$MYSQL_DATA/mysql" ]; then
 EOSQL
 fi
 
+# ── Start MySQL ──────────────────────────────────────────────
 echo "→ Starting MySQL..."
 mysqld --user=mysql --datadir="$MYSQL_DATA" &
 MYSQL_PID=$!
@@ -40,18 +43,35 @@ if ! mysql -u root --password="$ROOT_PASS" -e "SELECT 1 FROM \`$DB_NAME\`.produc
     if [ -f "$SCHEMA_FILE" ]; then
         echo "→ Importing schema from schema.sql..."
         mysql -u root --password="$ROOT_PASS" "$DB_NAME" < "$SCHEMA_FILE"
+        echo "→ Schema imported."
     fi
 fi
 
-echo "→ Starting services via supervisor..."
+# ── Start Qdrant ─────────────────────────────────────────────
+echo "→ Starting Qdrant vector database..."
+/usr/local/bin/qdrant --storage "$QDRANT_DATA" &
+QDRANT_PID=$!
+
+for i in $(seq 1 15); do
+    if curl -sf http://127.0.0.1:6333/ > /dev/null 2>&1; then
+        echo "→ Qdrant ready."
+        break
+    fi
+    sleep 1
+done
+
+# ── Start all services via supervisor ────────────────────────
+echo "→ Starting web services via supervisor..."
 /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
 SUPERVISOR_PID=$!
 
 cleanup() {
     echo "→ Shutting down..."
     kill "$SUPERVISOR_PID" 2>/dev/null || true
+    kill "$QDRANT_PID" 2>/dev/null || true
     kill "$MYSQL_PID" 2>/dev/null || true
     wait "$MYSQL_PID" 2>/dev/null || true
+    wait "$QDRANT_PID" 2>/dev/null || true
     exit 0
 }
 trap cleanup SIGTERM SIGINT

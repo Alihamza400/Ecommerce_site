@@ -10,12 +10,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     python3-venv \
+    curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
 RUN docker-php-ext-install mysqli pdo pdo_mysql
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+RUN curl -fsSL https://github.com/qdrant/qdrant/releases/download/v1.12.5/qdrant-x86_64-unknown-linux-gnu.tar.gz \
+    -o /tmp/qdrant.tar.gz \
+    && tar xzf /tmp/qdrant.tar.gz -C /usr/local/bin/ \
+    && rm /tmp/qdrant.tar.gz \
+    && mkdir -p /var/lib/qdrant/storage
 
 WORKDIR /app
 
