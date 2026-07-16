@@ -68,7 +68,7 @@
         const authDiv = document.getElementById('auth-actions');
         if (!authDiv) return;
 
-        const frontendPrefix = '/Ecommerce_site/Frontend/';
+        const frontendPrefix = window.location.pathname.includes('/Ecommerce_site/') ? '/Ecommerce_site/Frontend/' : '/';
         let roleLink = '';
         if (data.role === 'vendor') {
             roleLink = `<a href="${frontendPrefix}vendor/dashboard.html" style="color:var(--clr-accent); margin-right:1rem; text-decoration:none; font-weight:600;"><i class="ph ph-storefront"></i> Seller Hub</a>`;

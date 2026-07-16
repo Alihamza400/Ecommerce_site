@@ -10,8 +10,8 @@
 //     c. orders.php creates the order record, deducts stock, clears cart
 // ============================================================
 
-const BASE_URL       = '/Ecommerce_site/Backend';
-const PAYMENT_URL    = 'http://localhost:4000/v1/payments'; // Payment Orchestrator
+const BASE_URL       = window.location.pathname.includes('/Ecommerce_site/') ? '/Ecommerce_site/Backend' : '/Backend';
+const PAYMENT_URL    = '/api/payments'; // Payment Orchestrator (via Nginx proxy)
 
 let selectedAddressId = null;
 let selectedPayMethod = 'auto';
@@ -552,7 +552,8 @@ function setupOrderPlacement() {
             if (orderData.success) {
                 showPaymentStatus('✓ Order placed successfully!', 'success');
                 showAlert(`${orderData.message} (via ${paymentResult.gatewayUsed})`, 'success');
-                setTimeout(() => window.location.href = '/Ecommerce_site/Frontend/orders.html', 2000);
+                const ordersPath = window.location.pathname.includes('/Ecommerce_site/') ? '/Ecommerce_site/Frontend/orders.html' : '/orders.html';
+                setTimeout(() => window.location.href = ordersPath, 2000);
             } else {
                 showAlert(orderData.message);
                 setLoading(false);

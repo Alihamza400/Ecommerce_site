@@ -1,0 +1,112 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: ecommerce_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-Ecommerce_site}
+      MYSQL_USER: ${DB_USERNAME:-alihamza}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-R@i123ali}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: ecommerce_backend
+    environment:
+      DB_HOST: mysql
+      DB_USERNAME: ${DB_USERNAME:-alihamza}
+      DB_PASSWORD: ${DB_PASSWORD:-R@i123ali}
+      DB_DATABASE: ${DB_NAME:-Ecommerce_site}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+      OAUTH_SSL_VERIFY: ${OAUTH_SSL_VERIFY:-0}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: ecommerce_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - paymentsystem
+      - aiservice
+    restart: unless-stopped
+
+  paymentsystem:
+    build:
+      context: .
+      dockerfile: Dockerfile.payment
+    container_name: ecommerce_payments
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      CRYPTO_WALLET: ${CRYPTO_WALLET:-}
+      CRYPTO_NETWORK: ${CRYPTO_NETWORK:-BSC}
+      CRYPTO_CURRENCY: ${CRYPTO_CURRENCY:-USDT}
+      CRYPTO_WEBHOOK_SECRET: ${CRYPTO_WEBHOOK_SECRET:-}
+      CRYPTO_TEST_MODE: ${CRYPTO_TEST_MODE:-false}
+      GANACHE_RPC: ${GANACHE_RPC:-}
+    ports:
+      - "4000:4000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  aiservice:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai
+    container_name: ecommerce_ai
+    environment:
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+      PRODUCTS_COLLECTION: ${PRODUCTS_COLLECTION:-products}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: ecommerce_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  qdrant_data:

@@ -1,0 +1,13 @@
+.git/
+.gitignore
+AGENTS.md
+README.md
+.env
+.env.example
+node_modules/
+vendor/
+__pycache__/
+.venv/
+venv/
+*.log
+logs/

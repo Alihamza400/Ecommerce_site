@@ -1,6 +1,6 @@
 class AIAssistant {
     constructor() {
-        this.apiUrl = "http://localhost:8000";
+        this.apiUrl = "/api/ai";
         this.chatHistory = [];
         this.isOpen = false;
         this.initUI();
@@ -199,7 +199,7 @@ window.handleImageSearch = async function(fileInput) {
         reader.readAsDataURL(fileInput.files[0]);
         reader.onload = async function() {
             const base64 = reader.result;
-            const response = await fetch('http://localhost:8000/search/image-search', {
+            const response = await fetch('/api/ai/search/image-search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ image_data: base64, limit: 5 })
