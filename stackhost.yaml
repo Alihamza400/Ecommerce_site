@@ -1,0 +1,13 @@
+runtime:
+  image: ubuntu:22.04
+commands:
+  package: "nginx supervisor mariadb-server mariadb-client nodejs npm python3 python3-pip python3-venv curl"
+  build:
+    - "cd Backend && curl -sS https://getcomposer.org/installer | php && php composer.phar install --no-dev"
+    - "cd PaymentSystem && npm install --production"
+    - "pip3 install -r AIService/requirements.txt --break-system-packages"
+    - "curl -fsSL https://github.com/qdrant/qdrant/releases/download/v1.12.5/qdrant-x86_64-unknown-linux-gnu.tar.gz -o /tmp/qdrant.tar.gz && tar xzf /tmp/qdrant.tar.gz -C /usr/local/bin/ && rm /tmp/qdrant.tar.gz"
+  start: "bash /app/start.sh"
+repository:
+  branch: main
+  auto_deploy: true

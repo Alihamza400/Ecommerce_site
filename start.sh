@@ -9,6 +9,14 @@ MYSQL_DATA=/var/lib/mysql
 SCHEMA_FILE=/app/schema.sql
 QDRANT_DATA=/var/lib/qdrant/storage
 
+# ── Apache Config (idempotent) ───────────────────────────────
+if [ -f /etc/apache2/ports.conf ]; then
+    sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf 2>/dev/null || true
+    sed -i 's/:80>/:8080>/' /etc/apache2/sites-available/000-default.conf 2>/dev/null || true
+    sed -i 's|/var/www/html|/app|g' /etc/apache2/sites-available/000-default.conf 2>/dev/null || true
+    a2enmod rewrite 2>/dev/null || true
+fi
+
 # ── MySQL Init (first run only) ──────────────────────────────
 if [ ! -d "$MYSQL_DATA/mysql" ]; then
     echo "→ Initializing MySQL data directory..."
